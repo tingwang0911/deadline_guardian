@@ -37,9 +37,9 @@ const ConfirmDialog: Component<ConfirmDialogProps> = (props) => {
           class="confirm-dialog"
           style={{
             'background-color': 'white',
-            width: 320,
+            width: '320px',
             'max-width': '90vw',
-            'border-radius': 10,
+            'border-radius': '10px',
             'box-shadow': '0 20px 25px -5px rgba(0,0,0,0.1)',
             overflow: 'hidden',
             display: 'flex',
@@ -47,10 +47,10 @@ const ConfirmDialog: Component<ConfirmDialogProps> = (props) => {
           }}
         >
           <div style={{ padding: '20px 24px 16px' }}>
-            <div style={{ 'font-size': 16, 'font-weight': 600, color: '#111827', 'margin-bottom': 10 }}>
+            <div style={{ 'font-size': '16px', 'font-weight': 600, color: '#111827', 'margin-bottom': '10px' }}>
               {title()}
             </div>
-            <div style={{ 'font-size': 13, color: '#4B5563', 'line-height': 1.6 }}>
+            <div style={{ 'font-size': '13px', color: '#4B5563', 'line-height': 1.6 }}>
               {props.message}
             </div>
           </div>
@@ -58,7 +58,7 @@ const ConfirmDialog: Component<ConfirmDialogProps> = (props) => {
             style={{
               display: 'flex',
               'justify-content': 'flex-end',
-              gap: 10,
+              gap: '10px',
               padding: '12px 24px 16px',
               'border-top': '1px solid #F3F4F6',
             }}
@@ -68,8 +68,8 @@ const ConfirmDialog: Component<ConfirmDialogProps> = (props) => {
               onClick={props.onCancel}
               style={{
                 padding: '6px 16px',
-                'font-size': 13,
-                'border-radius': 6,
+                'font-size': '13px',
+                'border-radius': '6px',
                 border: '1px solid #D1D5DB',
                 background: 'white',
                 color: '#111827',
@@ -83,8 +83,8 @@ const ConfirmDialog: Component<ConfirmDialogProps> = (props) => {
               onClick={props.onConfirm}
               style={{
                 padding: '6px 16px',
-                'font-size': 13,
-                'border-radius': 6,
+                'font-size': '13px',
+                'border-radius': '6px',
                 border: '1px solid transparent',
                 'background-color': props.danger ? '#EF4444' : '#E1251B',
                 color: 'white',

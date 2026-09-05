@@ -76,7 +76,6 @@ const TaskItem: Component<TaskItemProps> = (props) => {
             const st = tagStyleByName(t, props.allTagsByName, i);
             return (
               <span
-                key={t}
                 class="tag"
                 style={{
                   'background-color': st.bg,

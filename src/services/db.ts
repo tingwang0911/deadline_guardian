@@ -229,9 +229,9 @@ export async function createOrUpdateFloatingCardConfig(config: FloatingCardConfi
   const existing = await getFloatingCardConfig(config.task_id);
   if (existing) {
     const { task_id, ...updates } = config;
-    await update('floating_card_configs', updates, 'task_id = ?', [task_id]);
+    await update('floating_card_configs', updates as unknown as Record<string, unknown>, 'task_id = ?', [task_id]);
   } else {
-    await insert('floating_card_configs', config);
+    await insert('floating_card_configs', { ...(config as unknown as Record<string, unknown>) });
   }
 }
 

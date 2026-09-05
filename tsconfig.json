@@ -6,6 +6,7 @@
     "moduleResolution": "bundler",
     "strict": true,
     "jsx": "preserve",
+    "jsxImportSource": "solid-js",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "esModuleInterop": true,

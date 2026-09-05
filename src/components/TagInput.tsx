@@ -129,11 +129,11 @@ const TagInput: Component<TagInputProps> = (props) => {
       style={{
         display: 'flex',
         'flex-wrap': 'wrap',
-        gap: 6,
+        gap: '6px',
         padding: '6px 10px',
         border: '1px solid var(--color-border, #E5E7EB)',
-        'border-radius': 6,
-        'min-height': 36,
+        'border-radius': '6px',
+        'min-height': '36px',
         'align-items': 'center',
         'background-color': 'var(--color-bg-card, white)',
         cursor: 'text',
@@ -154,12 +154,12 @@ const TagInput: Component<TagInputProps> = (props) => {
                 display: 'inline-flex',
                 'align-items': 'center',
                 padding: '1px 6px 1px 8px',
-                'border-radius': 999,
+                'border-radius': '999px',
                 'background-color': st.bg,
                 color: st.color,
-                'font-size': 12,
+                'font-size': '12px',
                 'font-weight': 500,
-                gap: 4,
+                gap: '4px',
               }}
             >
               {name}
@@ -176,15 +176,15 @@ const TagInput: Component<TagInputProps> = (props) => {
                   color: st.color,
                   cursor: 'pointer',
                   padding: 0,
-                  width: 14,
-                  height: 14,
+                  width: '14px',
+                  height: '14px',
                   'line-height': '12px',
                   'border-radius': '50%',
                   opacity: 0.7,
                   display: 'inline-flex',
                   'align-items': 'center',
                   'justify-content': 'center',
-                  'font-size': 14,
+                  'font-size': '14px',
                 }}
               >
                 ×
@@ -204,9 +204,9 @@ const TagInput: Component<TagInputProps> = (props) => {
         style={{
           border: 'none',
           outline: 'none',
-          'font-size': 13,
+          'font-size': '13px',
           flex: 1,
-          'min-width': 100,
+          'min-width': '100px',
           background: 'transparent',
           color: 'var(--color-text-primary, #111827)',
           'font-family': 'inherit',

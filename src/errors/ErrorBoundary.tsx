@@ -1,9 +1,9 @@
-import { Component, ErrorBoundary as SolidErrorBoundary, onMount } from 'solid-js';
+import { Component, ErrorBoundary as SolidErrorBoundary, type JSX } from 'solid-js';
 import { handleError } from './errorHandler';
 
 interface ErrorBoundaryProps {
   fallback?: Component<{ error: Error; resetError: () => void }>;
-  children: unknown;
+  children: JSX.Element;
 }
 
 const DefaultFallback: Component<{ error: Error; resetError: () => void }> = ({ error, resetError }) => {
@@ -26,9 +26,14 @@ const ErrorBoundary: Component<ErrorBoundaryProps> = (props) => {
 
   return (
     <SolidErrorBoundary
-      fallback={(error, resetError) => <Fallback error={error} resetError={resetError} />}
-      onError={(error) => {
-        handleError(error);
+      fallback={(error, resetError) => {
+        handleError(error instanceof Error ? error : new Error(String(error)));
+        return (
+          <Fallback
+            error={error instanceof Error ? error : new Error(String(error))}
+            resetError={resetError}
+          />
+        );
       }}
     >
       {props.children}

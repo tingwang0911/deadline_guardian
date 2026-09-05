@@ -124,8 +124,8 @@ const FloatingCardContent: Component<{
     const w = CARD_SIZES[sz];
     try {
       if (isTauriEnvironment()) {
-        const { getCurrentWindow } = await import('@tauri-apps/api/window');
-        await getCurrentWindow().setSize({ width: w, height: 80, type: 'Logical' });
+        const { getCurrentWindow, LogicalSize } = await import('@tauri-apps/api/window');
+        await getCurrentWindow().setSize(new LogicalSize(w, 80));
       }
       await execute(
         'UPDATE floating_card_configs SET card_width = ? WHERE task_id = ?',

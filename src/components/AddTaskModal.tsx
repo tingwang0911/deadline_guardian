@@ -233,31 +233,31 @@ const AddTaskModal: Component<AddTaskModalProps> = (props) => {
               <div class="datetime-row">
                 <select class="flex-1" value={year()} onChange={(e) => setYear((e.target as HTMLSelectElement).value)}>
                   {years.map((y) => (
-                    <option key={y.value} value={y.value}>{y.label}</option>
+                    <option value={y.value}>{y.label}</option>
                   ))}
                 </select>
                 <span class="separator">/</span>
                 <select class="flex-1" value={month()} onChange={(e) => setMonth((e.target as HTMLSelectElement).value)}>
                   {months.map((m) => (
-                    <option key={m.value} value={m.value}>{m.label}</option>
+                    <option value={m.value}>{m.label}</option>
                   ))}
                 </select>
                 <span class="separator">/</span>
                 <select class="flex-1" value={day()} onChange={(e) => setDay((e.target as HTMLSelectElement).value)}>
                   {getDaysInMonth().map((d) => (
-                    <option key={d.value} value={d.value}>{d.label}</option>
+                    <option value={d.value}>{d.label}</option>
                   ))}
                 </select>
                 <span class="separator">&nbsp;</span>
                 <select class="flex-1" value={hour()} onChange={(e) => setHour((e.target as HTMLSelectElement).value)}>
                   {hours.map((h) => (
-                    <option key={h.value} value={h.value}>{h.label}</option>
+                    <option value={h.value}>{h.label}</option>
                   ))}
                 </select>
                 <span class="separator">:</span>
                 <select class="flex-1" value={minute()} onChange={(e) => setMinute((e.target as HTMLSelectElement).value)}>
                   {minutes.map((m) => (
-                    <option key={m.value} value={m.value}>{m.label}</option>
+                    <option value={m.value}>{m.label}</option>
                   ))}
                 </select>
               </div>

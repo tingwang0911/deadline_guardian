@@ -61,9 +61,9 @@ const ContextMenu: Component<ContextMenuProps> = (props) => {
         style={{
           'background-color': 'white',
           border: '1px solid #E5E7EB',
-          'border-radius': 8,
+          'border-radius': '8px',
           'box-shadow': '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)',
-          'min-width': 180,
+          'min-width': '180px',
           padding: '4px 0',
         }}
       >
@@ -81,11 +81,11 @@ const ContextMenu: Component<ContextMenuProps> = (props) => {
                   display: 'flex',
                   'align-items': 'center',
                   padding: '8px 16px',
-                  'font-size': 13,
+                  'font-size': '13px',
                   cursor: item.disabled ? 'default' : 'pointer',
                   color: item.danger ? '#DC2626' : (item.disabled ? '#9CA3AF' : '#111827'),
                   transition: 'background-color 0.12s ease',
-                  gap: 8,
+                  gap: '8px',
                   'background-color': 'transparent',
                 }}
                 onMouseEnter={(e) => {
@@ -97,15 +97,15 @@ const ContextMenu: Component<ContextMenuProps> = (props) => {
                 }}
               >
                 <Show when={item.icon}>
-                  <span style={{ width: 16, 'text-align': 'center', 'flex-shrink': 0 }}>{item.icon}</span>
+                  <span style={{ width: '16px', 'text-align': 'center', 'flex-shrink': 0 }}>{item.icon}</span>
                 </Show>
                 <span style={{ flex: 1 }}>{item.label}</span>
                 <Show when={item.shortcut}>
-                  <span style={{ 'margin-left': 'auto', color: '#9CA3AF', 'font-size': 11 }}>{item.shortcut}</span>
+                  <span style={{ 'margin-left': 'auto', color: '#9CA3AF', 'font-size': '11px' }}>{item.shortcut}</span>
                 </Show>
               </div>
             }>
-              <div style={{ height: 1, 'background-color': '#E5E7EB', margin: '4px 0' }} />
+              <div style={{ height: '1px', 'background-color': '#E5E7EB', margin: '4px 0' }} />
             </Show>
           )}
         </For>

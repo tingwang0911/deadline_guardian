@@ -3,8 +3,8 @@ import { Component } from "solid-js";
 const TitleBar: Component = () => {
   const handleMinimize = async () => {
     try {
-      const { appWindow } = await import("@tauri-apps/api/window");
-      await appWindow.minimize();
+      const { getCurrentWindow } = await import("@tauri-apps/api/window");
+      await getCurrentWindow().minimize();
     } catch (e) {
       console.log("Tauri not available");
     }
@@ -12,8 +12,8 @@ const TitleBar: Component = () => {
 
   const handleClose = async () => {
     try {
-      const { appWindow } = await import("@tauri-apps/api/window");
-      await appWindow.hide();
+      const { getCurrentWindow } = await import("@tauri-apps/api/window");
+      await getCurrentWindow().hide();
     } catch (e) {
       console.log("Tauri not available");
     }

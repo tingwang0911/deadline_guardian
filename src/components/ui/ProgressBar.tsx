@@ -20,7 +20,7 @@ export function ProgressBar(props: ProgressBarProps): JSX.Element {
         class="progress-bar-fill"
         style={{
           width: `${percentage}%`,
-          backgroundColor: props.color,
+          'background-color': props.color,
         }}
       />
     </div>

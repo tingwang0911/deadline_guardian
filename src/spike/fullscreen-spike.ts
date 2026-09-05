@@ -1,16 +1,17 @@
-import { window } from '@tauri-apps/api';
+import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { primaryMonitor, availableMonitors } from '@tauri-apps/api/window';
 
 export async function createFullscreenBlackWindow(): Promise<void> {
   try {
-    const primaryMonitor = await window.getPrimaryMonitor();
-    
-    const blackWindow = await window.createWindow({
-      label: 'fullscreen-black',
+    const monitor = await primaryMonitor();
+    if (!monitor) throw new Error('未检测到显示器');
+
+    const blackWindow = new WebviewWindow('fullscreen-black', {
       url: 'index.html',
-      width: primaryMonitor.size.width,
-      height: primaryMonitor.size.height,
-      x: primaryMonitor.position.x,
-      y: primaryMonitor.position.y,
+      width: monitor.size.width,
+      height: monitor.size.height,
+      x: monitor.position.x,
+      y: monitor.position.y,
       fullscreen: true,
       decorations: false,
       transparent: true,
@@ -22,15 +23,14 @@ export async function createFullscreenBlackWindow(): Promise<void> {
       title: 'Deadline Guardian Fullscreen',
     });
 
-    await blackWindow.setPosition({ x: 0, y: 0 });
-    await blackWindow.setSize({ width: primaryMonitor.size.width, height: primaryMonitor.size.height });
-
-    await blackWindow.setAlwaysOnTop(true, 'screen-saver');
+    await blackWindow.setPosition(monitor.position);
+    await blackWindow.setSize(monitor.size);
+    await blackWindow.setAlwaysOnTop(true);
 
     const result = {
       success: true,
-      monitorWidth: primaryMonitor.size.width,
-      monitorHeight: primaryMonitor.size.height,
+      monitorWidth: monitor.size.width,
+      monitorHeight: monitor.size.height,
       windowCreated: true,
       alwaysOnTopSet: true,
       timestamp: new Date().toISOString(),
@@ -50,7 +50,7 @@ export async function createFullscreenBlackWindow(): Promise<void> {
 
 export async function testWindowCapabilities(): Promise<void> {
   try {
-    const capabilities = {
+    const capabilities: Record<string, unknown> = {
       supportsTransparent: false,
       supportsAlwaysOnTop: false,
       supportsFullscreen: false,
@@ -58,8 +58,8 @@ export async function testWindowCapabilities(): Promise<void> {
       monitors: [],
     };
 
-    const monitors = await window.getAllMonitors();
-    capabilities.monitors = monitors.map(m => ({
+    const monitors = await availableMonitors();
+    capabilities.monitors = monitors.map((m) => ({
       name: m.name,
       width: m.size.width,
       height: m.size.height,
@@ -67,8 +67,7 @@ export async function testWindowCapabilities(): Promise<void> {
       y: m.position.y,
     }));
 
-    const testWindow = await window.createWindow({
-      label: 'capability-test',
+    const testWindow = new WebviewWindow('capability-test', {
       url: 'index.html',
       width: 100,
       height: 100,

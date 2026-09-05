@@ -1,6 +1,12 @@
 node_modules
 dist
-src-tauri
+
+# Tauri / Rust 编译产物与生成文件（源码 src-tauri/src 需入库）
+src-tauri/target/
+src-tauri/gen/
 
 # 运行时数据（本地数据库，不入库）
 data/
+
+# 日志
+*.log

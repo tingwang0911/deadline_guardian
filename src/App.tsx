@@ -91,15 +91,13 @@ const App: Component = () => {
 
     setupListener();
 
-    // F12 打开 DevTools（前端快捷键，比全局快捷键更可靠）
+    // F12 打开 DevTools（通过 Rust 命令，Tauri v2 JS API 无 devtools 方法）
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'F12') {
         e.preventDefault();
         if (isTauriEnvironment()) {
-          import('@tauri-apps/api/webviewWindow')
-            .then(({ getCurrentWebviewWindow }) => {
-              getCurrentWebviewWindow().openDevtools();
-            })
+          import('@tauri-apps/api/core')
+            .then(({ invoke }) => invoke('open_devtools'))
             .catch((err) => console.warn('[App] openDevtools failed:', err));
         }
       }
@@ -210,15 +208,15 @@ const App: Component = () => {
         </div>
       </div>
 
-      <div style={{ display: 'flex', 'align-items': 'center', gap: 10 }}>
+      <div style={{ display: 'flex', 'align-items': 'center', gap: '10px' }}>
         <Show when={!canCreate()}>
           <div
             style={{
               position: 'fixed',
-              right: 96,
-              bottom: 26,
+              right: '96px',
+              bottom: '26px',
               color: '#DC2626',
-              'font-size': 12,
+              'font-size': '12px',
               'font-weight': 500,
               'z-index': 998,
             }}

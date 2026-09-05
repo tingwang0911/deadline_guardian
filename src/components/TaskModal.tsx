@@ -93,7 +93,6 @@ const TaskModal: Component<TaskModalProps> = (props) => {
             <div class="tag-selector">
               {TAGS.map((t) => (
                 <button
-                  key={t}
                   classList={{
                     "tag-option": true,
                     "active": tag() === t,

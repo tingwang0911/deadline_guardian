@@ -106,8 +106,8 @@ const Celebration: Component<CelebrationProps> = (props) => {
         <div
           style={{
             position: 'relative',
-            width: 160,
-            height: 160,
+            width: '160px',
+            height: '160px',
             display: 'flex',
             'align-items': 'center',
             'justify-content': 'center',
@@ -146,8 +146,8 @@ const Celebration: Component<CelebrationProps> = (props) => {
           {/* 绿色对勾圆形 */}
           <div
             style={{
-              width: 96,
-              height: 96,
+              width: '96px',
+              height: '96px',
               'border-radius': '50%',
               'background-color': '#10B981',
               display: 'flex',
@@ -161,8 +161,8 @@ const Celebration: Component<CelebrationProps> = (props) => {
             {/* 白色对勾 */}
             <div
               style={{
-                width: 26,
-                height: 44,
+                width: '26px',
+                height: '44px',
                 border: '6px solid white',
                 'border-top': 'none',
                 'border-left': 'none',
