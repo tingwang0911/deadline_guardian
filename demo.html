@@ -1,0 +1,68 @@
+﻿﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Deadline Guardian - 演示</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1e1e1e; color: #fff; }
+.window { width: 600px; margin: 50px auto; background: #2d2d2d; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+.titlebar { height: 36px; background: #1a1a1a; display: flex; align-items: center; padding: 0 10px; }
+.titlebar .controls span { width: 12px; height: 12px; border-radius: 50%; cursor: pointer; display: inline-block; margin-right: 8px; }
+.titlebar .close { background: #ff5f57; }
+.titlebar .minimize { background: #ffbd2e; }
+.titlebar .maximize { background: #28ca42; }
+.titlebar .title { flex: 1; text-align: center; font-size: 13px; color: #ccc; }
+.tabs { display: flex; border-bottom: 1px solid #3d3d3d; }
+.tab { padding: 12px 24px; font-size: 14px; cursor: pointer; color: #888; border-bottom: 2px solid transparent; }
+.tab.active { color: #e1251b; border-bottom-color: #e1251b; }
+.content { padding: 20px; min-height: 300px; }
+.task-item { background: #3d3d3d; padding: 12px 15px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.task-item .info h4 { font-size: 14px; margin-bottom: 4px; }
+.task-item .info span { font-size: 12px; color: #888; }
+.task-item .time { font-size: 12px; color: #e1251b; font-weight: bold; }
+.tray-preview { position: fixed; bottom: 30px; right: 30px; }
+.tray-icon { width: 32px; height: 32px; background: #e1251b; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
+.tray-menu { position: absolute; bottom: 40px; right: 0; background: #3d3d3d; border-radius: 6px; padding: 5px; min-width: 160px; }
+.tray-menu-item { padding: 8px 12px; font-size: 13px; cursor: pointer; border-radius: 4px; }
+.tray-menu-item:hover { background: #4d4d4d; }
+.tray-menu-divider { height: 1px; background: #555; margin: 5px 0; }
+.shortcuts { position: fixed; bottom: 30px; left: 30px; background: #2d2d2d; padding: 15px; border-radius: 6px; font-size: 12px; }
+.shortcuts h4 { margin-bottom: 8px; color: #e1251b; }
+.shortcuts .key { background: #3d3d3d; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
+</style>
+</head>
+<body>
+<div class="window">
+<div class="titlebar">
+<span class="controls"><span class="close"></span><span class="minimize"></span><span class="maximize"></span></span>
+<span class="title">Deadline Guardian</span>
+</div>
+<div class="tabs">
+<div class="tab active">⏰ 任务列表</div>
+<div class="tab">💪 健康提醒</div>
+</div>
+<div class="content">
+<div class="task-item"><div class="info"><h4>完成项目报告</h4><span>今天 18:00</span></div><div class="time">2小时后</div></div>
+<div class="task-item"><div class="info"><h4>团队周会</h4><span>明天 10:00</span></div><div class="time">14小时后</div></div>
+</div>
+</div>
+<div class="tray-preview">
+<div class="tray-icon">D</div>
+<div class="tray-menu">
+<div class="tray-menu-item">👁️ 显示主窗口</div>
+<div class="tray-menu-item">➕ 快速添加任务</div>
+<div class="tray-menu-divider"></div>
+<div class="tray-menu-item">⏸️ 暂停所有提醒 ✓</div>
+<div class="tray-menu-item">⚙️ 设置</div>
+<div class="tray-menu-divider"></div>
+<div class="tray-menu-item" style="color: #ff5f57;">❌ 退出</div>
+</div>
+</div>
+<div class="shortcuts">
+<h4>全局快捷键</h4>
+<div><span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">A</span> 添加任务</div>
+<div><span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">M</span> 切换窗口</div>
+<div><span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">P</span> 暂停提醒</div>
+</div>
+</body>
+</html>

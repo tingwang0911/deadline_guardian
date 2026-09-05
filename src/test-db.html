@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Database</title>
+  <script type="module">
+    import { invoke } from '@tauri-apps/api/core';
+
+    window.testDB = async function() {
+      console.log('=== Starting Database Test ===');
+      
+      try {
+        // Test 1: Query all tasks
+        console.log('\n[Test 1] Query all tasks...');
+        const tasks = await invoke('db_query', { 
+          sql: 'SELECT * FROM tasks', 
+          params: [] 
+        });
+        console.log('Tasks:', tasks);
+        
+        // Test 2: Insert a new task
+        console.log('\n[Test 2] Insert a new task...');
+        const insertResult = await invoke('db_execute', {
+          sql: 'INSERT INTO tasks (title, deadline, status, tags, show_floating) VALUES (?, ?, ?, ?, ?)',
+          params: ['测试任务', '2026-07-18T10:00:00.000Z', 'pending', '', 0]
+        });
+        console.log('Insert result:', insertResult);
+        
+        // Test 3: Get the inserted task
+        console.log('\n[Test 3] Query tasks again...');
+        const tasksAfter = await invoke('db_query', { 
+          sql: 'SELECT * FROM tasks', 
+          params: [] 
+        });
+        console.log('Tasks after insert:', tasksAfter);
+        
+        console.log('\n✅ All tests passed!');
+        document.getElementById('result').innerHTML = `
+          <h2>✅ 测试成功！</h2>
+          <p>任务数量: ${tasksAfter.length}</p>
+          <pre>${JSON.stringify(tasksAfter, null, 2)}</pre>
+        `;
+        
+      } catch (error) {
+        console.error('❌ Test failed:', error);
+        document.getElementById('result').innerHTML = `
+          <h2>❌ 测试失败</h2>
+          <p style="color: red;">${error.message}</p>
+          <pre>${error.stack || error}</pre>
+        `;
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #2563eb;
+    }
+    #result {
+      margin-top: 20px;
+      padding: 20px;
+      background: #f3f4f6;
+      border-radius: 8px;
+    }
+    pre {
+      overflow-x: auto;
+      background: #1f2937;
+      color: #f9fafb;
+      padding: 12px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>数据库测试页面</h1>
+  <p>点击按钮测试数据库功能，然后查看浏览器控制台（F12）</p>
+  <button onclick="testDB()">🧪 运行数据库测试</button>
+  <div id="result"></div>
+</body>
+</html>
