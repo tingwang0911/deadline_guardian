@@ -1,0 +1,6 @@
+node_modules
+dist
+src-tauri
+
+# 运行时数据（本地数据库，不入库）
+data/

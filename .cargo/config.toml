@@ -1,0 +1,3 @@
+[build]
+# 系统内存和虚拟内存严重不足（os error 1455），必须限制为 1 避免 mmap rlib 崩溃
+jobs = 1
