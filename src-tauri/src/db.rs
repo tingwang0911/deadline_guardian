@@ -43,9 +43,14 @@ CREATE TABLE IF NOT EXISTS floating_card_configs (
     pos_y         REAL NOT NULL DEFAULT 20,
     card_width    INTEGER NOT NULL DEFAULT 220,
     font_family   TEXT NOT NULL DEFAULT 'PingFang SC',
-    font_size     INTEGER NOT NULL DEFAULT 13,
+    font_size     INTEGER NOT NULL DEFAULT 14,
     font_bold     INTEGER NOT NULL DEFAULT 1,
     text_color    TEXT NOT NULL DEFAULT '#FFFFFF',
+    stroke_color  TEXT NOT NULL DEFAULT '#000000',
+    stroke_width  REAL NOT NULL DEFAULT 0,
+    bg_color      TEXT NOT NULL DEFAULT '#1F2937',
+    bg_opacity    REAL NOT NULL DEFAULT 0.55,
+    locked        INTEGER NOT NULL DEFAULT 0,
     always_on_top INTEGER NOT NULL DEFAULT 1,
     click_through INTEGER NOT NULL DEFAULT 0,
     monitor_index INTEGER NOT NULL DEFAULT 0
@@ -131,6 +136,37 @@ fn create_tables(conn: &Connection) -> Result<()> {
     Ok(())
 }
 
+/// 老数据库补列（ALTER TABLE ADD COLUMN，带默认值，可重复执行）
+fn migrate(conn: &Connection) {
+    let needed: &[(&str, &str)] = &[
+        ("stroke_color", "ALTER TABLE floating_card_configs ADD COLUMN stroke_color TEXT NOT NULL DEFAULT '#000000'"),
+        ("stroke_width", "ALTER TABLE floating_card_configs ADD COLUMN stroke_width REAL NOT NULL DEFAULT 0"),
+        ("bg_color",     "ALTER TABLE floating_card_configs ADD COLUMN bg_color TEXT NOT NULL DEFAULT '#1F2937'"),
+        ("bg_opacity",   "ALTER TABLE floating_card_configs ADD COLUMN bg_opacity REAL NOT NULL DEFAULT 0.55"),
+        ("locked",       "ALTER TABLE floating_card_configs ADD COLUMN locked INTEGER NOT NULL DEFAULT 0"),
+    ];
+
+    let existing: Vec<String> = match conn.prepare("PRAGMA table_info(floating_card_configs)") {
+        Ok(mut stmt) => stmt
+            .query_map([], |row| row.get::<_, String>(1))
+            .into_iter()
+            .flatten()
+            .flatten()
+            .collect(),
+        Err(_) => return, // 表还没建（create_tables 会建新表），无需迁移
+    };
+
+    for (col, sql) in needed {
+        if !existing.iter().any(|c| c == col) {
+            if let Err(e) = conn.execute(sql, []) {
+                println!("[MIGRATE] add column {} failed: {}", col, e);
+            } else {
+                println!("[MIGRATE] added column {}", col);
+            }
+        }
+    }
+}
+
 fn backup_corrupt_db(db_path: &str) {
     let backup_path = format!("{}.corrupt.bak", db_path);
     if let Err(e) = std::fs::copy(db_path, &backup_path) {
@@ -163,8 +199,9 @@ pub fn init_db() -> Result<Connection> {
     conn.pragma_update(None, "busy_timeout", 5000)?;
     
     create_tables(&conn)?;
+    migrate(&conn);
     ensure_db_healthy(&conn)?;
-    
+
     Ok(conn)
 }
 
@@ -202,8 +239,10 @@ pub struct QueryResult {
     pub rows_affected: i64,
 }
 
+/// 写命令：async 后在 Tauri 线程池执行，不占用主线程——
+/// 即使主线程在构建窗口/处理托盘，数据库写入也不会排队卡死（前端不再 15s 超时）。
 #[tauri::command]
-pub fn db_execute(sql: String, params: Vec<serde_json::Value>) -> Result<QueryResult, String> {
+pub async fn db_execute(sql: String, params: Vec<serde_json::Value>) -> Result<QueryResult, String> {
     println!("[DB_EXEC] sql={}, params={:?}", sql, params);
     let conn = get_connection().map_err(|e| {
         let msg = format!("DB connection failed: {}", e);
@@ -241,8 +280,9 @@ pub fn db_execute(sql: String, params: Vec<serde_json::Value>) -> Result<QueryRe
     })
 }
 
+/// 读命令：同样在线程池执行，与窗口/托盘等主线程工作彻底解耦。
 #[tauri::command]
-pub fn db_query(sql: String, params: Vec<serde_json::Value>) -> Result<Vec<HashMap<String, serde_json::Value>>, String> {
+pub async fn db_query(sql: String, params: Vec<serde_json::Value>) -> Result<Vec<HashMap<String, serde_json::Value>>, String> {
     println!("[DB_QUERY] sql={}, params={:?}", sql, params);
     let conn = get_connection().map_err(|e| {
         let msg = format!("DB query connection failed: {}", e);

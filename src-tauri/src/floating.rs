@@ -1,8 +1,16 @@
 use tauri::{AppHandle, LogicalPosition, Manager, WebviewUrl, WebviewWindowBuilder};
 
-/// Create or show a floating card window for a task
+/// 悬浮卡片数量上限
+const MAX_FLOATING_CARDS: usize = 10;
+
+/// Create or show a floating card window for a task.
+///
+/// 注意：此命令为 async（在线程池执行），窗口构建通过 `run_on_main_thread`
+/// 派发到主事件循环空闲时执行。**不要在 Tauri 命令调用栈里同步 build WebView2
+/// 窗口**——wry 构建时会在主线程嵌套消息循环等待 webview 就绪，与命令分发
+/// 重入会导致主线程永久卡死（所有后续 invoke 无响应，前端 15s 超时）。
 #[tauri::command]
-pub fn create_floating_card(
+pub async fn create_floating_card(
     app: AppHandle,
     task_id: String,
     pos_x: Option<f64>,
@@ -11,11 +19,48 @@ pub fn create_floating_card(
 ) -> Result<(), String> {
     let label = format!("floating-{}", task_id);
 
-    // If window already exists, just show it
+    // 窗口已存在：显示即可（窗口操作内部自动 marshal 到主线程）
     if let Some(win) = app.get_webview_window(&label) {
         if !win.is_visible().unwrap_or(false) {
             win.show().map_err(|e| e.to_string())?;
         }
+        return Ok(());
+    }
+
+    // 上限检查（收口到后端，前端无需预判）
+    let count = app
+        .webview_windows()
+        .keys()
+        .filter(|k| k.starts_with("floating-"))
+        .count();
+    if count >= MAX_FLOATING_CARDS {
+        return Err(format!("悬浮卡片数量已达上限（{} 张）", MAX_FLOATING_CARDS));
+    }
+
+    // 派发到主事件循环执行窗口构建；命令立即返回，绝不阻塞 IPC
+    let app_clone = app.clone();
+    app.run_on_main_thread(move || {
+        if let Err(e) = build_floating_window(&app_clone, &task_id, pos_x, pos_y, card_width) {
+            println!("[FLOATING] create card failed for task {}: {}", task_id, e);
+        }
+    })
+    .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+/// 在主线程上实际构建悬浮卡片窗口（仅由 run_on_main_thread 回调调用）
+fn build_floating_window(
+    app: &AppHandle,
+    task_id: &str,
+    pos_x: Option<f64>,
+    pos_y: Option<f64>,
+    card_width: Option<f64>,
+) -> tauri::Result<()> {
+    let label = format!("floating-{}", task_id);
+
+    // 防御：派发期间窗口可能已被其他路径创建
+    if app.get_webview_window(&label).is_some() {
         return Ok(());
     }
 
@@ -25,9 +70,9 @@ pub fn create_floating_card(
 
     let url = format!("index.html?window=floating&task={}", task_id);
 
-    WebviewWindowBuilder::new(&app, &label, WebviewUrl::App(url.into()))
+    WebviewWindowBuilder::new(app, &label, WebviewUrl::App(url.into()))
         .title("")
-        .inner_size(w, 80.0)
+        .inner_size(w, 96.0)
         .position(x, y)
         .transparent(true)
         .decorations(false)
@@ -35,9 +80,9 @@ pub fn create_floating_card(
         .skip_taskbar(true)
         .resizable(false)
         .shadow(false)
-        .build()
-        .map_err(|e| e.to_string())?;
+        .build()?;
 
+    println!("[FLOATING] card created for task: {}", task_id);
     Ok(())
 }
 
