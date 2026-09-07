@@ -1,6 +1,6 @@
 [package]
 name = "deadline-guardian"
-version = "0.1.0"
+version = "0.2.0"
 description = "Deadline Guardian - A deadline management and health reminder desktop app"
 edition = "2021"
 
