@@ -96,6 +96,7 @@ const App: Component = () => {
 
     let unsubscribe: (() => void) | undefined;
     let unsubCelebration: (() => void) | undefined;
+    let unsubFloatingFailed: (() => void) | undefined;
 
     const setupListener = async () => {
       if (!isTauriEnvironment()) {
@@ -111,6 +112,12 @@ const App: Component = () => {
         unsubCelebration = await listen('task-completed-celebration', () => {
           setCelebrationVisible(true);
           taskStore.loadTasks();
+        });
+        // 悬浮卡片创建失败（如达到 10 张上限）：Rust 异步构建，失败经事件回传，
+        // 必须给用户可见提示，否则任务已建但卡片不出现会让人以为功能坏了
+        unsubFloatingFailed = await listen<string>('floating-card-create-failed', (e) => {
+          console.warn('[App] floating card create failed:', e.payload);
+          window.alert(e.payload);
         });
       } catch (e) {
         console.log('[App] Failed to setup event listener:', e);
@@ -135,6 +142,7 @@ const App: Component = () => {
     onCleanup(() => {
       if (unsubscribe) unsubscribe();
       if (unsubCelebration) unsubCelebration();
+      if (unsubFloatingFailed) unsubFloatingFailed();
       window.removeEventListener('keydown', onKeyDown);
     });
   });

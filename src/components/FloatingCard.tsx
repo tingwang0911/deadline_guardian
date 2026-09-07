@@ -214,10 +214,10 @@ const FloatingCardContent: Component<{
   async function doHideCard() {
     try {
       await execute('UPDATE tasks SET show_floating = 0 WHERE id = ?', [props.taskId]);
-      if (isTauriEnvironment()) {
-        const { getCurrentWindow } = await import('@tauri-apps/api/window');
-        await getCurrentWindow().hide();
-      }
+      // 必须销毁窗口而非仅 hide()：hide 的窗口仍占用 Rust 端 10 张上限名额，
+      // 会导致之后新卡片全部被上限拒绝。show_floating 已置 0，重启不会恢复；
+      // 想重新显示，在主窗口编辑任务时勾选"在桌面显示悬浮任务卡片"即可。
+      await closeFloatingCard(props.taskId);
     } catch (e) {
       console.error('[FloatingCard] hide failed:', e);
     }

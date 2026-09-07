@@ -1,4 +1,4 @@
-use tauri::{AppHandle, LogicalPosition, Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Emitter, LogicalPosition, Manager, WebviewUrl, WebviewWindowBuilder};
 
 /// 悬浮卡片数量上限
 const MAX_FLOATING_CARDS: usize = 10;
@@ -27,21 +27,32 @@ pub async fn create_floating_card(
         return Ok(());
     }
 
-    // 上限检查（收口到后端，前端无需预判）
-    let count = app
-        .webview_windows()
-        .keys()
-        .filter(|k| k.starts_with("floating-"))
-        .count();
-    if count >= MAX_FLOATING_CARDS {
-        return Err(format!("悬浮卡片数量已达上限（{} 张）", MAX_FLOATING_CARDS));
-    }
-
-    // 派发到主事件循环执行窗口构建；命令立即返回，绝不阻塞 IPC
+    // 上限检查与窗口构建都派发到主线程，在同一回调内串行完成：
+    // 1) 检查与构建原子化，消除并发请求（如启动时批量恢复）同时读到旧计数、
+    //    把 10 张上限击穿的竞态；
+    // 2) build 不在 IPC 命令调用栈内执行，避免 wry 嵌套消息循环与命令分发重入死锁。
     let app_clone = app.clone();
     app.run_on_main_thread(move || {
+        // 防御：派发期间窗口可能已被其他路径创建
+        if app_clone.get_webview_window(&label).is_some() {
+            return;
+        }
+        let count = app_clone
+            .webview_windows()
+            .keys()
+            .filter(|k| k.starts_with("floating-"))
+            .count();
+        if count >= MAX_FLOATING_CARDS {
+            let msg = format!("悬浮卡片数量已达上限（{} 张），请先完成或隐藏部分卡片", MAX_FLOATING_CARDS);
+            println!("[FLOATING] create rejected (limit {}): {}", MAX_FLOATING_CARDS, task_id);
+            // 通知前端给出可见提示（命令本身仍返回 Ok，构建是异步派发的）
+            let _ = app_clone.emit("floating-card-create-failed", &msg);
+            return;
+        }
         if let Err(e) = build_floating_window(&app_clone, &task_id, pos_x, pos_y, card_width) {
             println!("[FLOATING] create card failed for task {}: {}", task_id, e);
+            let _ = app_clone
+                .emit("floating-card-create-failed", format!("悬浮卡片创建失败：{}", e));
         }
     })
     .map_err(|e| e.to_string())?;
