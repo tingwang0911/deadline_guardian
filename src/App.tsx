@@ -8,6 +8,8 @@ import ConfirmDialog from "./components/ConfirmDialog";
 import { ToggleSwitch } from "./components/ui";
 import { createTaskStore, TASK_MAX_COUNT } from "./stores/taskStore";
 import { isTauriEnvironment } from "./services/tauriAdapter";
+import { query, getFloatingCardConfig, type Task } from "./services/db";
+import { createFloatingCard } from "./services/floatingCard";
 import type { ParsedTask } from "./types/task";
 
 const App: Component = () => {
@@ -63,8 +65,34 @@ const App: Component = () => {
 
   (window as any).openAddModal = openAddModal;
 
+  // 启动时恢复桌面悬浮卡片：show_floating=1 且未完成的任务，按保存的位置/尺寸重建窗口
+  async function restoreFloatingCards() {
+    if (!isTauriEnvironment()) return;
+    try {
+      const tasks = await query<Pick<Task, 'id'>>(
+        "SELECT id FROM tasks WHERE show_floating = 1 AND status != 'completed'"
+      );
+      for (const t of tasks) {
+        try {
+          const cfg = await getFloatingCardConfig(t.id);
+          await createFloatingCard(
+            t.id,
+            cfg?.pos_x ?? 20,
+            cfg?.pos_y ?? 20,
+            cfg?.card_width ?? 220
+          );
+        } catch (e) {
+          console.warn('[App] restore floating card failed:', t.id, e);
+        }
+      }
+    } catch (e) {
+      console.warn('[App] restoreFloatingCards failed:', e);
+    }
+  }
+
   onMount(() => {
     taskStore.loadTasks();
+    restoreFloatingCards();
 
     let unsubscribe: (() => void) | undefined;
     let unsubCelebration: (() => void) | undefined;

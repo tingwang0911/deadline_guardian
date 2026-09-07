@@ -56,6 +56,11 @@ export interface FloatingCardConfig {
   font_size: number;
   font_bold: number;
   text_color: string;
+  stroke_color: string;
+  stroke_width: number;
+  bg_color: string;
+  bg_opacity: number;
+  locked: number;
   always_on_top: number;
   click_through: number;
   monitor_index: number;

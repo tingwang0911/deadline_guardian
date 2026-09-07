@@ -13,6 +13,13 @@ const windowType = urlParams.get("window");
 const taskId = urlParams.get("task");
 
 if (windowType === "floating" && taskId) {
+  // Floating card window - 页面背景必须全透明，否则卡片调透明时无法穿透到桌面
+  // （global.css 给 html/body/#root 设了不透明底色，主窗口需要、悬浮窗必须覆盖掉）
+  document.documentElement.style.backgroundColor = "transparent";
+  document.body.style.backgroundColor = "transparent";
+  const rootEl = document.getElementById("root");
+  if (rootEl) rootEl.style.backgroundColor = "transparent";
+
   // Floating card window - render FloatingCard directly
   render(
     () => (

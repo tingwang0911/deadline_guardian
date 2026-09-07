@@ -8,7 +8,7 @@ import {
   deleteFloatingCardConfig,
   type Task,
 } from '../services/db';
-import { closeFloatingCard } from '../services/floatingCard';
+import { createFloatingCard, closeFloatingCard } from '../services/floatingCard';
 import { isTauriEnvironment } from '../services/tauriAdapter';
 
 export const TASK_MAX_COUNT = 1000;
@@ -96,9 +96,14 @@ export function createTaskStore() {
       console.error('[taskStore] dbCreateTask failed:', dbErr);
       throw dbErr;
     }
-    // 注意：悬浮卡片窗口（floating card）功能尚未实现，
-    // 此处仅把 show_floating 标志存入数据库，暂不创建窗口。
-    // 待 Day 19 全屏/悬浮窗口功能完成后再恢复 createFloatingCard 调用。
+    // 勾选了"在桌面显示悬浮任务卡片"→ 创建桌面悬浮窗（数量上限由 Rust 端校验；
+    // 窗口构建是异步派发的，命令立即返回，不会拖慢/卡死任务创建）
+    if (data.show_floating && isTauriEnvironment()) {
+      createFloatingCard(id).catch((e) => {
+        // 悬浮窗创建失败不阻断任务创建（标志已入库，重启后可恢复）
+        console.warn('[taskStore] createFloatingCard failed:', e);
+      });
+    }
     await loadTasks();
     return id;
   }
@@ -120,6 +125,20 @@ export function createTaskStore() {
     if (data.tags !== undefined) patch.tags = JSON.stringify(data.tags);
     if (data.show_floating !== undefined) patch.show_floating = data.show_floating ? 1 : 0;
     await dbUpdateTask(id, patch);
+
+    // 同步桌面悬浮窗：勾选→创建/显示（Rust 端对已存在窗口幂等，仅 show）；取消勾选→关闭窗口
+    if (data.show_floating !== undefined && isTauriEnvironment()) {
+      try {
+        if (data.show_floating) {
+          await createFloatingCard(id);
+        } else {
+          await closeFloatingCard(id);
+        }
+      } catch (e) {
+        console.warn('[taskStore] sync floating card on edit failed:', e);
+      }
+    }
+
     await loadTasks();
   }
 
