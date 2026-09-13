@@ -2,6 +2,8 @@ import { render } from "solid-js/web";
 import "./assets/styles/global.css";
 import App from "./App";
 import FloatingCard from "./components/FloatingCard";
+import DrinkingPopup from "./components/health/DrinkingPopup";
+import StandingPopup from "./components/health/StandingPopup";
 import ErrorBoundary from "./errors/ErrorBoundary";
 import { registerGlobalErrorHandler } from "./errors/errorHandler";
 
@@ -12,7 +14,22 @@ const urlParams = new URLSearchParams(window.location.search);
 const windowType = urlParams.get("window");
 const taskId = urlParams.get("task");
 
-if (windowType === "floating" && taskId) {
+if (windowType === "drinking-popup" || windowType === "standing-popup") {
+  // 健康提醒弹窗：无标题栏透明窗口，页面背景必须透明以贴合卡片
+  document.documentElement.style.backgroundColor = "transparent";
+  document.body.style.backgroundColor = "transparent";
+  const rootEl = document.getElementById("root");
+  if (rootEl) rootEl.style.backgroundColor = "transparent";
+
+  render(
+    () => (
+      <ErrorBoundary>
+        {windowType === "drinking-popup" ? <DrinkingPopup /> : <StandingPopup />}
+      </ErrorBoundary>
+    ),
+    document.getElementById("root")!
+  );
+} else if (windowType === "floating" && taskId) {
   // Floating card window - 页面背景必须全透明，否则卡片调透明时无法穿透到桌面
   // （global.css 给 html/body/#root 设了不透明底色，主窗口需要、悬浮窗必须覆盖掉）
   document.documentElement.style.backgroundColor = "transparent";

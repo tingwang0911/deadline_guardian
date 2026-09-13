@@ -148,6 +148,57 @@ pub fn set_click_through(
     Ok(())
 }
 
+/// 批量设置所有悬浮卡片的点击穿透状态。
+/// 主窗口聚焦时传 false（所有卡片可交互），便于调整锁定中的卡片。
+#[tauri::command]
+pub fn set_all_floating_click_through(
+    app: AppHandle,
+    enabled: bool,
+) -> Result<(), String> {
+    for (label, win) in app.webview_windows() {
+        if label.starts_with("floating-") {
+            let _ = win.set_ignore_cursor_events(enabled);
+        }
+    }
+    Ok(())
+}
+
+/// 按数据库中的锁定状态恢复所有悬浮卡片穿透：
+/// 锁定（locked=1）→ 穿透；未锁定 → 不穿透。主窗口隐藏到托盘时调用。
+#[tauri::command]
+pub fn restore_floating_click_through(app: AppHandle) -> Result<(), String> {
+    // 收集每张卡片的 (label, locked)
+    let mut states: Vec<(String, bool)> = Vec::new();
+    if let Ok(conn) = crate::db::get_connection() {
+        for label in app.webview_windows().keys() {
+            if let Some(task_id) = label.strip_prefix("floating-") {
+                let locked: bool = conn
+                    .query_row(
+                        "SELECT locked FROM floating_card_configs WHERE task_id = ?1",
+                        rusqlite::params![task_id],
+                        |row| row.get::<_, i64>(0),
+                    )
+                    .map(|v| v == 1)
+                    .unwrap_or(false);
+                states.push((label.clone(), locked));
+            }
+        }
+    } else {
+        // DB 不可用时按标签全部恢复为不穿透（安全侧：卡片可交互）
+        for label in app.webview_windows().keys() {
+            if label.starts_with("floating-") {
+                states.push((label.clone(), false));
+            }
+        }
+    }
+    for (label, locked) in states {
+        if let Some(win) = app.get_webview_window(&label) {
+            let _ = win.set_ignore_cursor_events(locked);
+        }
+    }
+    Ok(())
+}
+
 /// Toggle always-on-top
 #[tauri::command]
 pub fn set_floating_always_on_top(

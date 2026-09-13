@@ -211,18 +211,18 @@ export async function updateSettings(updates: Partial<Omit<Setting, 'id'>>): Pro
   return update('settings', updates, 'id = ?', ['singleton']);
 }
 
-export async function getWaterLog(date: string): Promise<WaterLog | null> {
-  const result = await query<WaterLog>('SELECT * FROM water_log WHERE date = ?', [date]);
-  return result.length > 0 ? result[0] : null;
+/** 今日饮水杯数（每杯一条记录，按行数统计） */
+export async function getWaterCupCount(date: string): Promise<number> {
+  const result = await query<{ n: number }>(
+    'SELECT COUNT(*) AS n FROM water_log WHERE date = ?',
+    [date]
+  );
+  return result.length > 0 ? Number(result[0].n) : 0;
 }
 
-export async function createOrUpdateWaterLog(date: string, count: number): Promise<void> {
-  const existing = await getWaterLog(date);
-  if (existing) {
-    await update('water_log', { count }, 'date = ?', [date]);
-  } else {
-    await insert('water_log', { date, count });
-  }
+/** 记录喝一杯水（task_id 可为空） */
+export async function addWaterCup(cupTime: string, date: string, taskId: string | null = null): Promise<void> {
+  await insert('water_log', { cup_time: cupTime, date, task_id: taskId });
 }
 
 export async function getFloatingCardConfig(taskId: string): Promise<FloatingCardConfig | null> {

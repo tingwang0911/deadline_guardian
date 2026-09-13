@@ -1193,3 +1193,516 @@ html, body, #root {
   display: flex;
   flex-direction: column;
 }
+
+/* ============ 喝水提醒详情页 ============ */
+.health-item-clickable {
+  cursor: pointer;
+}
+
+.health-item-arrow {
+  display: flex;
+  align-items: center;
+}
+
+.health-detail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg);
+  overflow-y: auto;
+}
+
+.health-detail-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  background-color: var(--color-bg-card);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.health-detail-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-btn);
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.health-detail-back:hover {
+  background-color: var(--color-bg);
+}
+
+.health-detail-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.health-detail-body {
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.progress-section {
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+}
+
+.progress-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+}
+
+.progress-label {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.progress-count {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.progress-count strong {
+  color: var(--color-accent-blue);
+  font-size: var(--font-size-lg);
+}
+
+.progress-hint {
+  margin-top: var(--space-xs);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-placeholder);
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md) var(--space-lg);
+}
+
+.setting-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.setting-row .select {
+  width: auto;
+  min-width: 120px;
+}
+
+.number-stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.stepper-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-card);
+  color: var(--color-text-primary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.stepper-btn:hover:not(:disabled) {
+  border-color: var(--color-accent-blue);
+  color: var(--color-accent-blue);
+}
+
+.stepper-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.stepper-input {
+  width: 48px;
+  height: 30px;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-btn);
+  background-color: var(--color-bg);
+}
+
+.gender-radios {
+  display: flex;
+  gap: var(--space-lg);
+}
+
+.setting-tips {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  padding: 0 var(--space-xs);
+}
+
+.saving-hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-placeholder);
+  text-align: right;
+}
+
+/* ============ 提醒间隔手动输入（分钟） ============ */
+.interval-input {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-btn);
+  background-color: var(--color-bg-card);
+  overflow: hidden;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.interval-input:focus-within {
+  border-color: var(--color-accent-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.interval-input-field {
+  width: 64px;
+  height: 34px;
+  border: none;
+  outline: none;
+  padding: 0 4px 0 12px;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text-primary);
+  background: transparent;
+  text-align: right;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.interval-input-field::-webkit-outer-spin-button,
+.interval-input-field::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.interval-input-unit {
+  padding: 0 12px 0 6px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  user-select: none;
+}
+
+/* ============ 拉伸指导（久坐详情预览 + 弹窗共用文案样式） ============ */
+.stretch-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.stretch-section-title {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-md);
+}
+
+.stretch-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md) var(--space-lg);
+  margin-bottom: var(--space-md);
+}
+
+.stretch-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.stretch-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background-color: #EFF6FF;
+  flex-shrink: 0;
+}
+
+.stretch-name {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.stretch-desc {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.7;
+}
+
+.stretch-note {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-placeholder);
+  text-align: center;
+  margin-top: var(--space-sm);
+}
+
+/* ============ 健康提醒弹窗（喝水/久坐，独立透明窗口） ============ */
+.health-popup-wrap {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.health-popup-card {
+  width: 300px;
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-modal);
+  box-shadow: var(--shadow-xl);
+  padding: 24px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: health-popup-in 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes health-popup-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.health-popup-icon {
+  margin-bottom: 10px;
+  filter: drop-shadow(0 4px 8px rgba(59, 130, 246, 0.35));
+}
+
+.health-popup-message {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 8px;
+}
+
+.health-popup-tips {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.drinking-popup-progress {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: 16px;
+}
+
+.drinking-popup-progress strong {
+  color: var(--color-success);
+  font-size: var(--font-size-lg);
+}
+
+.health-popup-actions {
+  display: flex;
+  gap: var(--space-sm);
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+/* 久坐弹窗内的拉伸动作卡片 */
+.standing-stretch-card {
+  width: 100%;
+  background-color: #F0F9FF;
+  border: 1px solid #BAE6FD;
+  border-radius: var(--radius-panel);
+  padding: var(--space-md) var(--space-lg);
+  margin-bottom: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.standing-stretch-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.standing-stretch-name {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--color-accent-blue);
+}
+
+.standing-stretch-desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  line-height: 1.7;
+}
+
+.popup-btn {
+  flex: 1;
+  height: 38px;
+  border-radius: var(--radius-btn);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  transition: background-color var(--transition-fast), opacity var(--transition-fast);
+}
+
+.popup-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.popup-btn-primary {
+  background-color: var(--color-accent-blue);
+  color: var(--color-text-white);
+}
+
+.popup-btn-primary:hover:not(:disabled) {
+  background-color: var(--color-accent-blue-hover);
+}
+
+.popup-btn-secondary {
+  background-color: #EFF6FF;
+  color: var(--color-accent-blue);
+  position: relative;
+}
+
+.popup-btn-secondary:hover:not(:disabled) {
+  background-color: #DBEAFE;
+}
+
+.snooze-arrow {
+  /* 原型明确指定：三角箭头 font-size:30px，勿修改 */
+  font-size: 30px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  padding-left: 2px;
+  cursor: pointer;
+}
+
+.snooze-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+}
+
+.snooze-wrapper .popup-btn {
+  width: 100%;
+}
+
+.snooze-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.snooze-backdrop.open {
+  pointer-events: auto;
+}
+
+.snooze-dropdown {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 0;
+  min-width: 140px;
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-btn);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  z-index: 21;
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.snooze-dropdown.open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.snooze-option {
+  padding: 10px 14px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--transition-fast);
+}
+
+.snooze-option:hover {
+  background-color: #EFF6FF;
+  color: var(--color-accent-blue);
+}
+
+.popup-btn-silent {
+  border: none;
+  background: transparent;
+  color: var(--color-text-placeholder);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-family);
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: var(--radius-btn);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.popup-btn-silent:hover:not(:disabled) {
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg);
+}

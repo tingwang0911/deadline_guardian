@@ -63,12 +63,16 @@ CREATE TABLE IF NOT EXISTS health_configs (
     extra_config  TEXT DEFAULT '{}'
 );
 
+-- 饮水记录：每喝一杯插入一条（cup_time=喝水时刻，date=本地日期 YYYY-MM-DD）
+-- 今日杯数 = SELECT COUNT(*) WHERE date = 今天
 CREATE TABLE IF NOT EXISTS water_log (
     id            TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(8)))),
+    cup_time      TEXT NOT NULL,
     date          TEXT NOT NULL,
-    count         INTEGER NOT NULL DEFAULT 0,
-    UNIQUE(date)
+    task_id       TEXT
 );
+
+CREATE INDEX IF NOT EXISTS idx_water_log_date ON water_log(date);
 
 CREATE TABLE IF NOT EXISTS settings (
     id                TEXT PRIMARY KEY DEFAULT 'singleton',
@@ -164,6 +168,56 @@ fn migrate(conn: &Connection) {
                 println!("[MIGRATE] added column {}", col);
             }
         }
+    }
+
+    // water_log 从"按日 count 单行"（旧设计）重建为"每杯一条记录"
+    // （新设计：cup_time/task_id，今日杯数按行数统计）
+    let wl_cols: Vec<String> = match conn.prepare("PRAGMA table_info(water_log)") {
+        Ok(mut stmt) => stmt
+            .query_map([], |row| row.get::<_, String>(1))
+            .into_iter()
+            .flatten()
+            .flatten()
+            .collect(),
+        Err(_) => return, // 表还没建（新库由 create_tables 直接建新结构）
+    };
+    if !wl_cols.is_empty() && !wl_cols.iter().any(|c| c == "cup_time") {
+        // 先读出旧数据（date, count），重建后按 count 展开为每杯一条
+        let mut old_rows: Vec<(String, i64)> = Vec::new();
+        if let Ok(mut stmt) = conn.prepare("SELECT date, count FROM water_log") {
+            if let Ok(rows) = stmt.query_map([], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
+            }) {
+                for r in rows.flatten() {
+                    old_rows.push(r);
+                }
+            }
+        }
+
+        if let Err(e) = conn.execute_batch(
+            "ALTER TABLE water_log RENAME TO water_log_old;
+             CREATE TABLE water_log (
+                 id       TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(8)))),
+                 cup_time TEXT NOT NULL,
+                 date     TEXT NOT NULL,
+                 task_id  TEXT
+             );
+             CREATE INDEX IF NOT EXISTS idx_water_log_date ON water_log(date);",
+        ) {
+            println!("[MIGRATE] water_log rebuild failed: {}", e);
+            return;
+        }
+        for (date, count) in old_rows {
+            for _ in 0..count.max(0) {
+                // 旧数据没有具体时刻，用当天 12:00 近似
+                let _ = conn.execute(
+                    "INSERT INTO water_log (cup_time, date, task_id) VALUES (?1 || ' 12:00:00', ?1, NULL)",
+                    rusqlite::params![date],
+                );
+            }
+        }
+        let _ = conn.execute_batch("DROP TABLE water_log_old;");
+        println!("[MIGRATE] water_log rebuilt to per-cup rows");
     }
 }
 

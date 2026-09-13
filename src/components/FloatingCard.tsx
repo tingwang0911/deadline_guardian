@@ -1,4 +1,4 @@
-import { Component, createSignal, createMemo, onMount, onCleanup, Show, For } from 'solid-js';
+import { Component, createSignal, createMemo, createEffect, onMount, onCleanup, Show, For } from 'solid-js';
 import { useCountdown } from '../hooks/useCountdown';
 import {
   query,
@@ -177,11 +177,20 @@ const FloatingCardContent: Component<{
     void setPanel(!panelOpen());
   }
 
+  // ===== 点击穿透：固定(locked)模式且面板未展开时穿透（点击落到下方窗口）；
+  // 可拖拽模式、或右键面板展开时必须可交互。locked/panelOpen 是唯一状态源 =====
+  createEffect(() => {
+    const through = locked() && !panelOpen();
+    if (!isTauriEnvironment()) return;
+    void setClickThrough(props.taskId, through);
+  });
+
   // ===== 开关动作 =====
   async function toggleLocked() {
     const next = !locked();
     setLocked(next);
     persist('locked', next ? 1 : 0);
+    // 穿透状态由上面的 createEffect 统一联动，无需在此单独调用
   }
   async function toggleAlwaysOnTop() {
     const next = !alwaysOnTop();
@@ -554,10 +563,7 @@ const FloatingCard: Component<{ taskId: string }> = (props) => {
       // 校正窗口尺寸（Rust 创建时是默认尺寸）
       await win.setSize(new LogicalSize(cfg?.card_width ?? DEFAULTS.card_width, CARD_H));
 
-      // 恢复点击穿透 / 置顶状态
-      if (cfg?.click_through === 1) {
-        await setClickThrough(props.taskId, true);
-      }
+      // 恢复置顶状态；点击穿透由 createEffect 按 locked 状态统一推导
       if (cfg && cfg.always_on_top === 0) {
         await setFloatingAlwaysOnTop(props.taskId, false);
       }

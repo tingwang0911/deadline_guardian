@@ -6,10 +6,14 @@ import TaskList from "./components/task/TaskList";
 import Celebration from "./components/Celebration";
 import ConfirmDialog from "./components/ConfirmDialog";
 import { ToggleSwitch } from "./components/ui";
+import DrinkingDetail from "./components/health/DrinkingDetail";
+import StandingDetail from "./components/health/StandingDetail";
+import { useHealthReminders } from "./hooks/useHealthReminders";
 import { createTaskStore, TASK_MAX_COUNT } from "./stores/taskStore";
 import { isTauriEnvironment } from "./services/tauriAdapter";
 import { query, getFloatingCardConfig, type Task } from "./services/db";
 import { createFloatingCard } from "./services/floatingCard";
+import { getDrinkingConfig, saveDrinkingConfig, getStandingConfig, saveStandingConfig, scheduleNextRemind } from "./services/health";
 import type { ParsedTask } from "./types/task";
 
 const App: Component = () => {
@@ -26,6 +30,40 @@ const App: Component = () => {
   const [standingEnabled, setStandingEnabled] = createSignal(true);
   const [eyecareEnabled, setEyecareEnabled] = createSignal(false);
   const [autoStart, setAutoStart] = createSignal(true);
+
+  // 健康生活二级页面：home=功能开关首页，drinking=喝水提醒详情，standing=久坐站立详情
+  const [healthView, setHealthView] = createSignal<'home' | 'drinking' | 'standing'>('home');
+
+  // 健康提醒定时调度（喝水/久坐，主窗口内运行）
+  useHealthReminders();
+
+  /** 喝水提醒开关：即时持久化到 health_configs；开启时按间隔安排下次提醒 */
+  async function onToggleDrinking(checked: boolean) {
+    setDrinkingEnabled(checked);
+    if (!isTauriEnvironment()) return;
+    try {
+      const cfg = await saveDrinkingConfig({ enabled: checked });
+      if (checked) {
+        scheduleNextRemind('drinking', cfg.intervalMin);
+      }
+    } catch (e) {
+      console.warn('[App] 保存喝水开关失败:', e);
+    }
+  }
+
+  /** 久坐/站立提醒开关：即时持久化到 health_configs；开启时按间隔安排下次提醒 */
+  async function onToggleStanding(checked: boolean) {
+    setStandingEnabled(checked);
+    if (!isTauriEnvironment()) return;
+    try {
+      const cfg = await saveStandingConfig({ enabled: checked });
+      if (checked) {
+        scheduleNextRemind('standing', cfg.intervalMin);
+      }
+    } catch (e) {
+      console.warn('[App] 保存久坐开关失败:', e);
+    }
+  }
 
   const canCreate = createMemo(() => taskStore.canCreateTask());
   const taskCount = createMemo(() => taskStore.taskCount());
@@ -93,6 +131,16 @@ const App: Component = () => {
   onMount(() => {
     taskStore.loadTasks();
     restoreFloatingCards();
+
+    // 恢复喝水/久坐提醒开关状态（其余健康开关后续接入持久化）
+    if (isTauriEnvironment()) {
+      getDrinkingConfig()
+        .then((cfg) => setDrinkingEnabled(cfg.enabled))
+        .catch((e) => console.warn('[App] 读取喝水配置失败:', e));
+      getStandingConfig()
+        .then((cfg) => setStandingEnabled(cfg.enabled))
+        .catch((e) => console.warn('[App] 读取久坐配置失败:', e));
+    }
 
     let unsubscribe: (() => void) | undefined;
     let unsubCelebration: (() => void) | undefined;
@@ -183,23 +231,45 @@ const App: Component = () => {
       </div>
 
       <div classList={{ "tab-content": true, "active": activeTab() === "health" }}>
+        <Show
+          when={healthView() === 'home'}
+          fallback={
+            healthView() === 'drinking'
+              ? <DrinkingDetail onBack={() => setHealthView('home')} />
+              : <StandingDetail onBack={() => setHealthView('home')} />
+          }
+        >
         <div class="health-section">
           <div class="health-section-title">功能开关</div>
 
-          <div class="health-item">
+          <div class="health-item health-item-clickable" onClick={() => setHealthView('drinking')} title="点击进入喝水提醒设置">
             <div class="health-info">
               <div class="health-name">喝水提醒</div>
               <div class="health-desc">定时提醒喝水，记录每日饮水量</div>
             </div>
-            <ToggleSwitch checked={drinkingEnabled()} onChange={setDrinkingEnabled} />
+            <span class="health-item-arrow">
+              <span onClick={(e) => e.stopPropagation()}>
+                <ToggleSwitch checked={drinkingEnabled()} onChange={onToggleDrinking} />
+              </span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px;color:var(--color-text-secondary);">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </span>
           </div>
 
-          <div class="health-item">
+          <div class="health-item health-item-clickable" onClick={() => setHealthView('standing')} title="点击进入久坐站立设置">
             <div class="health-info">
               <div class="health-name">久坐/站立提醒</div>
               <div class="health-desc">久坐后提醒站立活动，附带文字拉伸指导</div>
             </div>
-            <ToggleSwitch checked={standingEnabled()} onChange={setStandingEnabled} />
+            <span class="health-item-arrow">
+              <span onClick={(e) => e.stopPropagation()}>
+                <ToggleSwitch checked={standingEnabled()} onChange={onToggleStanding} />
+              </span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px;color:var(--color-text-secondary);">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </span>
           </div>
 
           <div class="health-item">
@@ -242,6 +312,7 @@ const App: Component = () => {
             </div>
           </div>
         </div>
+        </Show>
       </div>
 
       <div style={{ display: 'flex', 'align-items': 'center', gap: '10px' }}>

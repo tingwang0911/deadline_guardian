@@ -13,6 +13,7 @@ use tauri_plugin_global_shortcut::GlobalShortcutExt;
 mod db;
 mod error_handler;
 mod floating;
+mod reminder;
 
 /// 打开主窗口 DevTools（调试构建可用）
 #[tauri::command]
@@ -39,9 +40,13 @@ fn main() {
             floating::close_floating_card,
             floating::set_floating_position,
             floating::set_click_through,
+            floating::set_all_floating_click_through,
+            floating::restore_floating_click_through,
             floating::set_floating_always_on_top,
             floating::get_floating_card_count,
             floating::get_floating_card_labels,
+            reminder::create_drinking_popup,
+            reminder::create_standing_popup,
         ])
         .setup(move |app| {
             let app_handle = app.handle();
@@ -151,15 +156,31 @@ fn main() {
         .on_window_event(|app, event| match event {
             tauri::WindowEvent::CloseRequested { api, .. } => {
                 let label = app.label().to_string();
-                // Floating card windows: close normally (don't prevent)
-                if label.starts_with("floating-") {
+                // 悬浮卡片、健康提醒弹窗（喝水/久坐）：正常关闭（销毁窗口）
+                if label.starts_with("floating-")
+                    || label == "drinking-popup"
+                    || label == "standing-popup"
+                {
                     return;
                 }
-                // Main window: hide instead of close
+                // Main window: hide instead of close；隐藏后恢复锁定卡片的点击穿透
                 let w = app.get_webview_window("main").unwrap();
                 if w.is_visible().unwrap_or(false) {
                     w.hide().unwrap();
                     api.prevent_close();
+                    let _ = floating::restore_floating_click_through(app.app_handle().clone());
+                }
+            }
+            // 主窗口聚焦时：所有悬浮卡片临时可交互（方便调整锁定中的卡片）；
+            // 主窗口失焦时：按锁定状态恢复（锁定卡片恢复点击穿透）
+            tauri::WindowEvent::Focused(focused) => {
+                if app.label() == "main" {
+                    let handle = app.app_handle();
+                    if *focused {
+                        let _ = floating::set_all_floating_click_through(handle.clone(), false);
+                    } else {
+                        let _ = floating::restore_floating_click_through(handle.clone());
+                    }
                 }
             }
             _ => {}
