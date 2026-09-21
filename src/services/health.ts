@@ -211,3 +211,33 @@ export async function saveStandingConfig(patch: Partial<StandingConfig>): Promis
   );
   return merged;
 }
+
+// ============ 护眼/远眺提醒（首页行内直接设置间隔） ============
+
+export interface EyecareConfig {
+  enabled: boolean;
+  intervalMin: number; // 远眺提醒间隔（分钟）
+}
+
+/** 读取护眼提醒配置（extra_config 中的模式等参数暂不启用，保持原样） */
+export async function getEyecareConfig(): Promise<EyecareConfig> {
+  const rows = await query<{ enabled: number; interval_min: number }>(
+    "SELECT enabled, interval_min FROM health_configs WHERE id = 'eyecare'"
+  );
+  const r = rows[0];
+  return {
+    enabled: (r?.enabled ?? 0) === 1,
+    intervalMin: r?.interval_min ?? 20,
+  };
+}
+
+/** 保存护眼提醒开关/间隔（即时保存；extra_config 保持原样） */
+export async function saveEyecareConfig(patch: Partial<EyecareConfig>): Promise<EyecareConfig> {
+  const cur = await getEyecareConfig();
+  const merged = { ...cur, ...patch };
+  await execute(
+    "UPDATE health_configs SET enabled = ?, interval_min = ? WHERE id = 'eyecare'",
+    [merged.enabled ? 1 : 0, merged.intervalMin]
+  );
+  return merged;
+}

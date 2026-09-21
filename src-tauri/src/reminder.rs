@@ -56,7 +56,7 @@ fn show_popup(app: &AppHandle, label: &str, url_path: &str, win_w: f64, win_h: f
 pub async fn create_drinking_popup(app: AppHandle) -> Result<(), String> {
     let app_clone = app.clone();
     app.run_on_main_thread(move || {
-        show_popup(&app_clone, "drinking-popup", "drinking-popup", 340.0, 430.0, "drinking");
+        show_popup(&app_clone, "drinking-popup", "drinking-popup", 340.0, 400.0, "drinking");
     })
     .map_err(|e| e.to_string())?;
     Ok(())
@@ -67,7 +67,7 @@ pub async fn create_drinking_popup(app: AppHandle) -> Result<(), String> {
 pub async fn create_standing_popup(app: AppHandle) -> Result<(), String> {
     let app_clone = app.clone();
     app.run_on_main_thread(move || {
-        show_popup(&app_clone, "standing-popup", "standing-popup", 340.0, 430.0, "standing");
+        show_popup(&app_clone, "standing-popup", "standing-popup", 340.0, 400.0, "standing");
     })
     .map_err(|e| e.to_string())?;
     Ok(())

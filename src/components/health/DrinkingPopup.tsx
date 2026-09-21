@@ -135,6 +135,7 @@ const DrinkingPopup: Component = () => {
             <div classList={{ 'snooze-dropdown': true, 'open': menuOpen() }}>
               <div class="snooze-option" onClick={() => handleSnooze(10)}>10分钟后提醒</div>
               <div class="snooze-option" onClick={() => handleSnooze(30)}>30分钟后提醒</div>
+              <div class="snooze-option" onClick={() => handleSnooze(60)}>1小时后提醒</div>
             </div>
           </div>
         </div>

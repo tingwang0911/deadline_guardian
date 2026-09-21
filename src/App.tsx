@@ -5,7 +5,7 @@ import AddTaskModal from "./components/AddTaskModal";
 import TaskList from "./components/task/TaskList";
 import Celebration from "./components/Celebration";
 import ConfirmDialog from "./components/ConfirmDialog";
-import { ToggleSwitch } from "./components/ui";
+import { ToggleSwitch, IntervalInput } from "./components/ui";
 import DrinkingDetail from "./components/health/DrinkingDetail";
 import StandingDetail from "./components/health/StandingDetail";
 import { useHealthReminders } from "./hooks/useHealthReminders";
@@ -13,7 +13,7 @@ import { createTaskStore, TASK_MAX_COUNT } from "./stores/taskStore";
 import { isTauriEnvironment } from "./services/tauriAdapter";
 import { query, getFloatingCardConfig, type Task } from "./services/db";
 import { createFloatingCard } from "./services/floatingCard";
-import { getDrinkingConfig, saveDrinkingConfig, getStandingConfig, saveStandingConfig, scheduleNextRemind } from "./services/health";
+import { getDrinkingConfig, saveDrinkingConfig, getStandingConfig, saveStandingConfig, getEyecareConfig, saveEyecareConfig, scheduleNextRemind } from "./services/health";
 import type { ParsedTask } from "./types/task";
 
 const App: Component = () => {
@@ -29,6 +29,7 @@ const App: Component = () => {
   const [drinkingEnabled, setDrinkingEnabled] = createSignal(true);
   const [standingEnabled, setStandingEnabled] = createSignal(true);
   const [eyecareEnabled, setEyecareEnabled] = createSignal(false);
+  const [eyecareInterval, setEyecareInterval] = createSignal(20);
   const [autoStart, setAutoStart] = createSignal(true);
 
   // 健康生活二级页面：home=功能开关首页，drinking=喝水提醒详情，standing=久坐站立详情
@@ -62,6 +63,27 @@ const App: Component = () => {
       }
     } catch (e) {
       console.warn('[App] 保存久坐开关失败:', e);
+    }
+  }
+
+  /** 护眼/远眺开关与间隔：即时持久化到 health_configs（行内直接设置，无需进入详情） */
+  async function onToggleEyecare(checked: boolean) {
+    setEyecareEnabled(checked);
+    if (!isTauriEnvironment()) return;
+    try {
+      await saveEyecareConfig({ enabled: checked });
+    } catch (e) {
+      console.warn('[App] 保存护眼开关失败:', e);
+    }
+  }
+
+  async function onChangeEyecareInterval(minutes: number) {
+    setEyecareInterval(minutes);
+    if (!isTauriEnvironment()) return;
+    try {
+      await saveEyecareConfig({ intervalMin: minutes });
+    } catch (e) {
+      console.warn('[App] 保存护眼间隔失败:', e);
     }
   }
 
@@ -132,7 +154,7 @@ const App: Component = () => {
     taskStore.loadTasks();
     restoreFloatingCards();
 
-    // 恢复喝水/久坐提醒开关状态（其余健康开关后续接入持久化）
+    // 恢复喝水/久坐/护眼提醒开关与间隔状态
     if (isTauriEnvironment()) {
       getDrinkingConfig()
         .then((cfg) => setDrinkingEnabled(cfg.enabled))
@@ -140,6 +162,12 @@ const App: Component = () => {
       getStandingConfig()
         .then((cfg) => setStandingEnabled(cfg.enabled))
         .catch((e) => console.warn('[App] 读取久坐配置失败:', e));
+      getEyecareConfig()
+        .then((cfg) => {
+          setEyecareEnabled(cfg.enabled);
+          setEyecareInterval(cfg.intervalMin);
+        })
+        .catch((e) => console.warn('[App] 读取护眼配置失败:', e));
     }
 
     let unsubscribe: (() => void) | undefined;
@@ -272,12 +300,18 @@ const App: Component = () => {
             </span>
           </div>
 
-          <div class="health-item">
+          <div class="health-item health-item-eyecare">
             <div class="health-info">
               <div class="health-name">护眼/远眺提醒</div>
               <div class="health-desc">20-20-20法则，支持强制黑屏远眺</div>
             </div>
-            <ToggleSwitch checked={eyecareEnabled()} onChange={setEyecareEnabled} />
+            <span class="eyecare-controls">
+              <span class="eyecare-interval">
+                <span class="eyecare-interval-label">提醒间隔</span>
+                <IntervalInput value={eyecareInterval()} onChange={onChangeEyecareInterval} min={1} max={240} />
+              </span>
+              <ToggleSwitch checked={eyecareEnabled()} onChange={onToggleEyecare} />
+            </span>
           </div>
 
           <div class="health-general">
@@ -315,6 +349,8 @@ const App: Component = () => {
         </Show>
       </div>
 
+      {/* 右下角加号仅属于任务管理；健康生活页无添加任务入口 */}
+      <Show when={activeTab() === 'tasks'}>
       <div style={{ display: 'flex', 'align-items': 'center', gap: '10px' }}>
         <Show when={!canCreate()}>
           <div
@@ -348,6 +384,7 @@ const App: Component = () => {
           +
         </button>
       </div>
+      </Show>
 
       <AddTaskModal
         isOpen={isModalOpen()}
