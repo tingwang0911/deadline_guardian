@@ -122,12 +122,6 @@ const FloatingCardContent: Component<{
   const isUrgent = createMemo(() => urgencyLevel() === 'urgent' || urgencyLevel() === 'overdue');
   const isWarning = createMemo(() => urgencyLevel() === 'warning');
 
-  const cardBorder = createMemo(() => {
-    if (isUrgent()) return '1.5px solid rgba(239, 68, 68, 0.95)';
-    if (isWarning()) return '1.5px solid rgba(245, 158, 11, 0.9)';
-    return '1.5px solid rgba(255, 255, 255, 0.22)';
-  });
-
   const titleStyle = createMemo(() => ({
     'font-size': `${fontSize()}px`,
     color: textColor(),
@@ -252,11 +246,10 @@ const FloatingCardContent: Component<{
           'backdrop-filter': 'blur(6px)',
           '-webkit-backdrop-filter': 'blur(6px)',
           'border-radius': '12px',
-          border: cardBorder(),
+          border: 'none',
           cursor: locked() ? 'default' : 'move',
           'user-select': 'none',
           overflow: 'hidden',
-          transition: 'border 0.2s ease',
         }}
         classList={{ 'fc-urgent-pulse': isUrgent() }}
         onMouseDown={handleCardMouseDown}

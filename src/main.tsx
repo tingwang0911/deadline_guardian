@@ -4,6 +4,7 @@ import App from "./App";
 import FloatingCard from "./components/FloatingCard";
 import DrinkingPopup from "./components/health/DrinkingPopup";
 import StandingPopup from "./components/health/StandingPopup";
+import BlackScreen from "./components/health/BlackScreen";
 import ErrorBoundary from "./errors/ErrorBoundary";
 import { registerGlobalErrorHandler } from "./errors/errorHandler";
 
@@ -25,6 +26,21 @@ if (windowType === "drinking-popup" || windowType === "standing-popup") {
     () => (
       <ErrorBoundary>
         {windowType === "drinking-popup" ? <DrinkingPopup /> : <StandingPopup />}
+      </ErrorBoundary>
+    ),
+    document.getElementById("root")!
+  );
+} else if (windowType === "eyecare-blackscreen") {
+  // 护眼强制黑屏：透明窗口 + 页面内 rgba(0,0,0,0.95) 黑色层
+  document.documentElement.style.backgroundColor = "transparent";
+  document.body.style.backgroundColor = "transparent";
+  const rootEl = document.getElementById("root");
+  if (rootEl) rootEl.style.backgroundColor = "transparent";
+
+  render(
+    () => (
+      <ErrorBoundary>
+        <BlackScreen />
       </ErrorBoundary>
     ),
     document.getElementById("root")!

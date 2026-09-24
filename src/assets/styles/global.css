@@ -1207,10 +1207,38 @@ html, body, #root {
 /* 护眼/远眺行：不可点击进入，行内直接设置间隔 */
 .health-item-eyecare {
   cursor: default;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
 }
 
 .health-item-eyecare:hover {
   background-color: var(--color-bg-card);
+}
+
+.eyecare-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.eyecare-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.eyecare-mode {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eyecare-mode .general-select {
+  min-width: 104px;
 }
 
 .eyecare-controls {
@@ -1733,4 +1761,87 @@ html, body, #root {
 .popup-btn-silent:hover:not(:disabled) {
   color: var(--color-text-secondary);
   background-color: var(--color-bg);
+}
+
+/* ============ 护眼远眺强制黑屏（独立全屏窗口，参照 eyecare-blackscreen.html） ============ */
+.blackscreen-root {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 500ms ease;
+}
+
+.blackscreen-root.blackscreen-fading {
+  opacity: 0;
+}
+
+.blackscreen-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+.blackscreen-text {
+  color: #FFFFFF;
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.blackscreen-timer {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.blackscreen-timer svg {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+
+.blackscreen-ring-progress {
+  transition: stroke-dashoffset 100ms linear;
+}
+
+.blackscreen-count {
+  position: relative;
+  color: #FFFFFF;
+  font-size: 48px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.blackscreen-exit-btn {
+  position: fixed;
+  right: 40px;
+  bottom: 40px;
+  padding: 10px 24px;
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-btn);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.blackscreen-exit-btn:hover,
+.blackscreen-exit-btn.blackscreen-exit-btn-hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #FFFFFF;
+  color: #FFFFFF;
 }

@@ -13,7 +13,8 @@ import { createTaskStore, TASK_MAX_COUNT } from "./stores/taskStore";
 import { isTauriEnvironment } from "./services/tauriAdapter";
 import { query, getFloatingCardConfig, type Task } from "./services/db";
 import { createFloatingCard } from "./services/floatingCard";
-import { getDrinkingConfig, saveDrinkingConfig, getStandingConfig, saveStandingConfig, getEyecareConfig, saveEyecareConfig, scheduleNextRemind } from "./services/health";
+import { getDrinkingConfig, saveDrinkingConfig, getStandingConfig, saveStandingConfig, getEyecareConfig, saveEyecareConfig, scheduleNextRemind, type EyecareMode } from "./services/health";
+import { safeInvoke } from "./services/tauriAdapter";
 import type { ParsedTask } from "./types/task";
 
 const App: Component = () => {
@@ -30,7 +31,8 @@ const App: Component = () => {
   const [standingEnabled, setStandingEnabled] = createSignal(true);
   const [eyecareEnabled, setEyecareEnabled] = createSignal(false);
   const [eyecareInterval, setEyecareInterval] = createSignal(20);
-  const [autoStart, setAutoStart] = createSignal(true);
+  const [eyecareMode, setEyecareMode] = createSignal<EyecareMode>('gentle');
+  const [autoStart, setAutoStart] = createSignal(false);
 
   // 健康生活二级页面：home=功能开关首页，drinking=喝水提醒详情，standing=久坐站立详情
   const [healthView, setHealthView] = createSignal<'home' | 'drinking' | 'standing'>('home');
@@ -71,7 +73,10 @@ const App: Component = () => {
     setEyecareEnabled(checked);
     if (!isTauriEnvironment()) return;
     try {
-      await saveEyecareConfig({ enabled: checked });
+      const cfg = await saveEyecareConfig({ enabled: checked });
+      if (checked) {
+        scheduleNextRemind('eyecare', cfg.intervalMin);
+      }
     } catch (e) {
       console.warn('[App] 保存护眼开关失败:', e);
     }
@@ -84,6 +89,31 @@ const App: Component = () => {
       await saveEyecareConfig({ intervalMin: minutes });
     } catch (e) {
       console.warn('[App] 保存护眼间隔失败:', e);
+    }
+  }
+
+  /** 护眼模式：gentle=系统通知温和提醒；force=全屏强制黑屏（全屏应用自动降级通知） */
+  async function onChangeEyecareMode(mode: EyecareMode) {
+    setEyecareMode(mode);
+    if (!isTauriEnvironment()) return;
+    try {
+      await saveEyecareConfig({ mode });
+    } catch (e) {
+      console.warn('[App] 保存护眼模式失败:', e);
+    }
+  }
+
+  /** 开机自启动：写入/移除 Windows 当前用户 Run 注册表项，失败时回滚勾选状态 */
+  async function onToggleAutoStart(checked: boolean) {
+    setAutoStart(checked);
+    if (!isTauriEnvironment()) return;
+    try {
+      const actual = await safeInvoke<boolean>('set_auto_start', { enabled: checked });
+      setAutoStart(actual === true);
+    } catch (e) {
+      console.warn('[App] 设置开机自启失败:', e);
+      setAutoStart(!checked);
+      window.alert('开机自启动设置失败：' + (e as Error).message);
     }
   }
 
@@ -166,8 +196,13 @@ const App: Component = () => {
         .then((cfg) => {
           setEyecareEnabled(cfg.enabled);
           setEyecareInterval(cfg.intervalMin);
+          setEyecareMode(cfg.mode);
         })
         .catch((e) => console.warn('[App] 读取护眼配置失败:', e));
+      // 开机自启状态以系统注册表为准（启动时回填勾选）
+      safeInvoke<boolean>('get_auto_start')
+        .then((v) => setAutoStart(v === true))
+        .catch((e) => console.warn('[App] 读取开机自启状态失败:', e));
     }
 
     let unsubscribe: (() => void) | undefined;
@@ -301,17 +336,30 @@ const App: Component = () => {
           </div>
 
           <div class="health-item health-item-eyecare">
-            <div class="health-info">
-              <div class="health-name">护眼/远眺提醒</div>
-              <div class="health-desc">20-20-20法则，支持强制黑屏远眺</div>
+            <div class="eyecare-top">
+              <div class="health-info">
+                <div class="health-name">护眼/远眺提醒</div>
+                <div class="health-desc">20-20-20法则，支持强制黑屏远眺</div>
+              </div>
+              <ToggleSwitch checked={eyecareEnabled()} onChange={onToggleEyecare} />
             </div>
-            <span class="eyecare-controls">
+            <div class="eyecare-controls-row">
               <span class="eyecare-interval">
                 <span class="eyecare-interval-label">提醒间隔</span>
                 <IntervalInput value={eyecareInterval()} onChange={onChangeEyecareInterval} min={1} max={240} />
               </span>
-              <ToggleSwitch checked={eyecareEnabled()} onChange={onToggleEyecare} />
-            </span>
+              <span class="eyecare-mode">
+                <span class="eyecare-interval-label">模式</span>
+                <select
+                  class="general-select"
+                  value={eyecareMode()}
+                  onChange={(e) => onChangeEyecareMode(e.currentTarget.value as EyecareMode)}
+                >
+                  <option value="gentle">温和通知</option>
+                  <option value="force">强制黑屏</option>
+                </select>
+              </span>
+            </div>
           </div>
 
           <div class="health-general">
@@ -339,7 +387,7 @@ const App: Component = () => {
 
             <div class="general-setting">
               <label class="checkbox">
-                <input type="checkbox" checked={autoStart()} onChange={(e) => setAutoStart(e.target.checked)}/>
+                <input type="checkbox" checked={autoStart()} onChange={(e) => onToggleAutoStart(e.target.checked)}/>
                 <span class="checkbox-mark"></span>
                 <span>开机自动启动</span>
               </label>

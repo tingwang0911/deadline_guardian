@@ -2,9 +2,11 @@ import { onMount, onCleanup } from 'solid-js';
 import {
   refreshDrinkingConfig,
   getStandingConfig,
+  getEyecareConfig,
   isSilentToday,
   openDrinkingPopup,
   openStandingPopup,
+  triggerEyecare,
   getNextRemindAt,
   scheduleNextRemind,
 } from '../services/health';
@@ -67,10 +69,33 @@ export function useHealthReminders(): void {
       }
     };
 
+    const tickEyecare = async () => {
+      try {
+        const cfg = await getEyecareConfig();
+        if (!cfg.enabled) return;
+
+        const now = Date.now();
+        const next = getNextRemindAt('eyecare');
+        if (!next) {
+          scheduleNextRemind('eyecare', cfg.intervalMin);
+          return;
+        }
+        if (now >= next) {
+          // 到期：按配置模式触发（force 模式在 Rust 端检测全屏应用并自动降级通知）
+          await triggerEyecare(cfg.mode, cfg.lookDurationSec, cfg.customText);
+          // 兜底重排：黑屏/通知本身不重排，由调度器统一按间隔安排下一次
+          scheduleNextRemind('eyecare', cfg.intervalMin);
+        }
+      } catch (e) {
+        console.warn('[health-reminder] eyecare tick failed:', e);
+      }
+    };
+
     const tick = () => {
       if (stopped) return;
       void tickDrinking();
       void tickStanding();
+      void tickEyecare();
     };
 
     void tick();

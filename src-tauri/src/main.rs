@@ -12,8 +12,10 @@ use tauri_plugin_global_shortcut::GlobalShortcutExt;
 
 mod db;
 mod error_handler;
+mod eyecare;
 mod floating;
 mod reminder;
+mod system;
 
 /// 打开主窗口 DevTools（调试构建可用）
 #[tauri::command]
@@ -31,6 +33,11 @@ fn main() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .invoke_handler(tauri::generate_handler![
             db::db_execute,
             db::db_query,
@@ -47,6 +54,9 @@ fn main() {
             floating::get_floating_card_labels,
             reminder::create_drinking_popup,
             reminder::create_standing_popup,
+            eyecare::trigger_eyecare,
+            system::set_auto_start,
+            system::get_auto_start,
         ])
         .setup(move |app| {
             let app_handle = app.handle();
@@ -156,10 +166,11 @@ fn main() {
         .on_window_event(|app, event| match event {
             tauri::WindowEvent::CloseRequested { api, .. } => {
                 let label = app.label().to_string();
-                // 悬浮卡片、健康提醒弹窗（喝水/久坐）：正常关闭（销毁窗口）
+                // 悬浮卡片、健康提醒弹窗（喝水/久坐）、护眼黑屏：正常关闭（销毁窗口）
                 if label.starts_with("floating-")
                     || label == "drinking-popup"
                     || label == "standing-popup"
+                    || label == "eyecare-blackscreen"
                 {
                     return;
                 }

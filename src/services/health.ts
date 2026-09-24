@@ -142,7 +142,7 @@ export async function closeCurrentPopup(): Promise<void> {
  * 下次提醒时间（epoch ms），存 localStorage（各窗口同源共享）。
  * 0 表示尚未初始化。按提醒类型分别记录。
  */
-export type ReminderType = 'drinking' | 'standing';
+export type ReminderType = 'drinking' | 'standing' | 'eyecare';
 function nextKey(type: ReminderType): string {
   return `${type}_next_remind_at`;
 }
@@ -212,32 +212,68 @@ export async function saveStandingConfig(patch: Partial<StandingConfig>): Promis
   return merged;
 }
 
-// ============ 护眼/远眺提醒（首页行内直接设置间隔） ============
+// ============ 护眼/远眺提醒（首页行内直接设置间隔+模式） ============
+
+export type EyecareMode = 'gentle' | 'force';
 
 export interface EyecareConfig {
   enabled: boolean;
-  intervalMin: number; // 远眺提醒间隔（分钟）
+  intervalMin: number;    // 远眺提醒间隔（分钟）
+  mode: EyecareMode;      // gentle=系统通知温和提醒；force=全屏强制黑屏
+  lookDurationSec: number; // 强制黑屏远眺时长（秒）
+  customText: string;     // 黑屏居中提示词
 }
 
-/** 读取护眼提醒配置（extra_config 中的模式等参数暂不启用，保持原样） */
+export const DEFAULT_EYECARE_TEXT = '眨眨眼，进行远眺';
+
+/** 读取护眼提醒配置（extra_config: {mode, look_duration, custom_text}，缺失给默认值） */
 export async function getEyecareConfig(): Promise<EyecareConfig> {
-  const rows = await query<{ enabled: number; interval_min: number }>(
-    "SELECT enabled, interval_min FROM health_configs WHERE id = 'eyecare'"
-  );
+  const rows = await query<{
+    enabled: number;
+    interval_min: number;
+    extra_config: string | null;
+  }>("SELECT enabled, interval_min, extra_config FROM health_configs WHERE id = 'eyecare'");
   const r = rows[0];
+  let extra: { mode?: string; look_duration?: number; custom_text?: string } = {};
+  try {
+    extra = r?.extra_config ? JSON.parse(r.extra_config) : {};
+  } catch {
+    extra = {};
+  }
   return {
     enabled: (r?.enabled ?? 0) === 1,
     intervalMin: r?.interval_min ?? 20,
+    mode: extra.mode === 'force' ? 'force' : 'gentle',
+    lookDurationSec: extra.look_duration ?? 20,
+    customText: extra.custom_text || DEFAULT_EYECARE_TEXT,
   };
 }
 
-/** 保存护眼提醒开关/间隔（即时保存；extra_config 保持原样） */
+/** 保存护眼提醒配置（开关/间隔/模式/时长/提示词，extra_config 整体重写） */
 export async function saveEyecareConfig(patch: Partial<EyecareConfig>): Promise<EyecareConfig> {
   const cur = await getEyecareConfig();
   const merged = { ...cur, ...patch };
+  const extra = JSON.stringify({
+    mode: merged.mode,
+    look_duration: merged.lookDurationSec,
+    custom_text: merged.customText,
+  });
   await execute(
-    "UPDATE health_configs SET enabled = ?, interval_min = ? WHERE id = 'eyecare'",
-    [merged.enabled ? 1 : 0, merged.intervalMin]
+    "UPDATE health_configs SET enabled = ?, interval_min = ?, extra_config = ? WHERE id = 'eyecare'",
+    [merged.enabled ? 1 : 0, merged.intervalMin, extra]
   );
   return merged;
+}
+
+/**
+ * 触发护眼提醒：
+ * - gentle：Rust 端发 Windows 系统通知，不遮挡屏幕；
+ * - force：Rust 端先做全屏检测，全屏应用时自动降级通知，否则弹出全屏黑屏。
+ */
+export async function triggerEyecare(
+  mode: EyecareMode,
+  durationSec: number,
+  text: string
+): Promise<void> {
+  await safeInvoke('trigger_eyecare', { mode, durationSec, text });
 }
