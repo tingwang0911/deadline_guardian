@@ -1,7 +1,115 @@
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex, OnceLock};
+use std::time::Duration;
+
 use tauri::{AppHandle, Emitter, LogicalPosition, Manager, WebviewUrl, WebviewWindowBuilder};
 
 /// 悬浮卡片数量上限
 const MAX_FLOATING_CARDS: usize = 10;
+
+// ===== 悬浮卡片交互状态（由前端上报，hover watcher 统一消费）=====
+// 穿透推导：locked && !panel_open && !main_focused && !cursor_inside
+//   - locked：用户锁定卡片位置（常态穿透，不挡下方操作）
+//   - panel_open：右键设置面板展开期间必须可交互
+//   - main_focused：主窗口在前时，所有卡片临时可交互（沿用既有设计）
+//   - cursor_inside：光标悬停在卡片窗口内时临时可交互，
+//     这样锁定的卡片也能直接右键打开设置，移开光标即恢复穿透
+#[derive(Clone, Copy, Default)]
+struct CardState {
+    locked: bool,
+    panel_open: bool,
+}
+
+fn card_states() -> &'static Arc<Mutex<HashMap<String, CardState>>> {
+    static STATES: OnceLock<Arc<Mutex<HashMap<String, CardState>>>> = OnceLock::new();
+    STATES.get_or_init(|| Arc::new(Mutex::new(HashMap::new())))
+}
+
+fn main_focused() -> &'static Arc<Mutex<bool>> {
+    static FOCUSED: OnceLock<Arc<Mutex<bool>>> = OnceLock::new();
+    FOCUSED.get_or_init(|| Arc::new(Mutex::new(false)))
+}
+
+/// 主窗口聚焦/失焦标志（由 main.rs 的 Focused 事件写入）
+pub fn set_main_focused(focused: bool) {
+    *main_focused().lock().unwrap() = focused;
+}
+
+/// 前端上报某张卡片的锁定 / 面板展开状态
+#[tauri::command]
+pub fn set_floating_card_state(
+    _app: AppHandle,
+    task_id: String,
+    locked: bool,
+    panel_open: bool,
+) -> Result<(), String> {
+    let label = format!("floating-{}", task_id);
+    card_states()
+        .lock()
+        .unwrap()
+        .insert(label, CardState { locked, panel_open });
+    Ok(())
+}
+
+/// 常驻轮询：根据锁定状态、面板展开、主窗口聚焦与光标位置，
+/// 统一设置每张悬浮卡片的鼠标穿透（无键盘钩子，仅窗口级 WS_EX_TRANSPARENT 切换）。
+pub fn start_hover_watcher(app: AppHandle) {
+    #[cfg(windows)]
+    hover_watcher_windows(app);
+    #[cfg(not(windows))]
+    let _ = app;
+}
+
+#[cfg(windows)]
+fn hover_watcher_windows(app: AppHandle) {
+    std::thread::spawn(move || {
+        // 本线程记录每张窗口上次应用的穿透态，仅在翻转时下发
+        let mut applied: HashMap<String, bool> = HashMap::new();
+        loop {
+            std::thread::sleep(Duration::from_millis(120));
+
+            use windows::Win32::Foundation::POINT;
+            use windows::Win32::UI::WindowsAndMessaging::GetCursorPos;
+
+            let mut pt = POINT::default();
+            if unsafe { GetCursorPos(&mut pt) }.is_err() {
+                continue;
+            }
+            let focused = *main_focused().lock().unwrap();
+            let states = card_states().lock().unwrap().clone();
+
+            for (label, win) in app.webview_windows() {
+                if !label.starts_with("floating-") {
+                    continue;
+                }
+                if !win.is_visible().unwrap_or(false) {
+                    continue;
+                }
+                let st = states.get(&label).copied().unwrap_or_default();
+                // 未锁定 / 面板展开 / 主窗口在前：一律可交互
+                let mut want_through = st.locked && !st.panel_open && !focused;
+                if want_through {
+                    // 仅锁定穿透态需要判断光标是否悬停在窗口内（物理像素比较）
+                    if let (Ok(pos), Ok(size)) = (win.outer_position(), win.outer_size()) {
+                        let inside = pt.x >= pos.x
+                            && pt.x < pos.x + size.width as i32
+                            && pt.y >= pos.y
+                            && pt.y < pos.y + size.height as i32;
+                        if inside {
+                            want_through = false;
+                        }
+                    }
+                }
+                // 只在状态翻转时调用，避免高频无意义 IPC
+                if applied.get(&label) != Some(&want_through) {
+                    if win.set_ignore_cursor_events(want_through).is_ok() {
+                        applied.insert(label, want_through);
+                    }
+                }
+            }
+        }
+    });
+}
 
 /// Create or show a floating card window for a task.
 ///
@@ -129,36 +237,6 @@ pub fn set_floating_position(
     if let Some(win) = app.get_webview_window(&label) {
         win.set_position(tauri::Position::Logical(LogicalPosition::new(x, y)))
             .map_err(|e| e.to_string())?;
-    }
-    Ok(())
-}
-
-/// Toggle click-through (mouse events pass through window)
-#[tauri::command]
-pub fn set_click_through(
-    app: AppHandle,
-    task_id: String,
-    enabled: bool,
-) -> Result<(), String> {
-    let label = format!("floating-{}", task_id);
-    if let Some(win) = app.get_webview_window(&label) {
-        win.set_ignore_cursor_events(enabled)
-            .map_err(|e| e.to_string())?;
-    }
-    Ok(())
-}
-
-/// 批量设置所有悬浮卡片的点击穿透状态。
-/// 主窗口聚焦时传 false（所有卡片可交互），便于调整锁定中的卡片。
-#[tauri::command]
-pub fn set_all_floating_click_through(
-    app: AppHandle,
-    enabled: bool,
-) -> Result<(), String> {
-    for (label, win) in app.webview_windows() {
-        if label.starts_with("floating-") {
-            let _ = win.set_ignore_cursor_events(enabled);
-        }
     }
     Ok(())
 }

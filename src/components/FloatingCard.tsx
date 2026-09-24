@@ -7,7 +7,7 @@ import {
   type FloatingCardConfig,
 } from '../services/db';
 import {
-  setClickThrough,
+  setFloatingCardState,
   setFloatingAlwaysOnTop,
   closeFloatingCard,
 } from '../services/floatingCard';
@@ -171,12 +171,12 @@ const FloatingCardContent: Component<{
     void setPanel(!panelOpen());
   }
 
-  // ===== 点击穿透：固定(locked)模式且面板未展开时穿透（点击落到下方窗口）；
-  // 可拖拽模式、或右键面板展开时必须可交互。locked/panelOpen 是唯一状态源 =====
+  // ===== 上报交互状态：Rust 端 hover watcher 据此统一推导穿透 =====
+  // 穿透 = locked && !panelOpen && !主窗口聚焦 && !光标悬停。
+  // 锁定的卡片常态穿透，但光标移入时 watcher 会临时放开，使右键仍可打开本面板。
   createEffect(() => {
-    const through = locked() && !panelOpen();
     if (!isTauriEnvironment()) return;
-    void setClickThrough(props.taskId, through);
+    void setFloatingCardState(props.taskId, locked(), panelOpen());
   });
 
   // ===== 开关动作 =====
@@ -254,14 +254,10 @@ const FloatingCardContent: Component<{
         classList={{ 'fc-urgent-pulse': isUrgent() }}
         onMouseDown={handleCardMouseDown}
         onContextMenu={handleContextMenu}
-        title="左键拖动位置 · 右键打开设置"
+        title={locked() ? '已锁定：光标移到卡片上后右键可打开设置' : '左键拖动位置 · 右键打开设置'}
       >
         <div style={titleStyle()}>{props.task.title}</div>
         <div style={{ ...countdownStyle(), 'margin-top': '4px' }}>{countdown.state().text}</div>
-
-        <Show when={locked()}>
-          <span style={{ position: 'absolute', top: '4px', right: '8px', 'font-size': '11px', opacity: 0.85 }}>🔒</span>
-        </Show>
 
         <Show when={isUrgent()}>
           <style>{`

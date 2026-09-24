@@ -46,8 +46,7 @@ fn main() {
             floating::hide_floating_card,
             floating::close_floating_card,
             floating::set_floating_position,
-            floating::set_click_through,
-            floating::set_all_floating_click_through,
+            floating::set_floating_card_state,
             floating::restore_floating_click_through,
             floating::set_floating_always_on_top,
             floating::get_floating_card_count,
@@ -69,6 +68,9 @@ fn main() {
                 Ok(()) => println!("[STARTUP] DB quick test PASSED"),
                 Err(e) => println!("[STARTUP] DB quick test FAILED: {}", e),
             }
+
+            // 悬浮卡片：光标悬停 watcher（锁定穿透的卡片，悬停时临时可交互以便右键设置）
+            floating::start_hover_watcher(app_handle.clone());
 
             let icon = app.default_window_icon().unwrap().clone();
 
@@ -182,15 +184,14 @@ fn main() {
                     let _ = floating::restore_floating_click_through(app.app_handle().clone());
                 }
             }
-            // 主窗口聚焦时：所有悬浮卡片临时可交互（方便调整锁定中的卡片）；
-            // 主窗口失焦时：按锁定状态恢复（锁定卡片恢复点击穿透）
+            // 主窗口聚焦时标志置位：hover watcher 统一让所有悬浮卡片临时可交互
+            // （方便调整锁定中的卡片）；失焦/隐藏时清除标志，锁定卡片恢复点击穿透
             tauri::WindowEvent::Focused(focused) => {
                 if app.label() == "main" {
-                    let handle = app.app_handle();
-                    if *focused {
-                        let _ = floating::set_all_floating_click_through(handle.clone(), false);
-                    } else {
-                        let _ = floating::restore_floating_click_through(handle.clone());
+                    floating::set_main_focused(*focused);
+                    if !*focused {
+                        // 立即按 DB 锁定态收敛一次，不必等待 watcher 下一个轮询周期
+                        let _ = floating::restore_floating_click_through(app.app_handle().clone());
                     }
                 }
             }

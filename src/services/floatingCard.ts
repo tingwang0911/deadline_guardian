@@ -30,11 +30,12 @@ export async function setFloatingPosition(
   await safeInvoke('set_floating_position', { taskId, x, y });
 }
 
-export async function setClickThrough(
+export async function setFloatingCardState(
   taskId: string,
-  enabled: boolean
+  locked: boolean,
+  panelOpen: boolean
 ): Promise<void> {
-  await safeInvoke('set_click_through', { taskId, enabled });
+  await safeInvoke('set_floating_card_state', { taskId, locked, panelOpen });
 }
 
 export async function setFloatingAlwaysOnTop(
