@@ -112,7 +112,7 @@ const AddTaskModal: Component<AddTaskModalProps> = (props) => {
   const handleSubmit = async () => {
     setSubmitStatus('loading');
     setErrorMessage('');
-    document.title = '[创建中...] Deadline Guardian';
+    document.title = '[创建中...] 到点了';
     console.log('[AddTaskModal] handleSubmit called, edit=', isEdit());
 
     // 超时保护：任何后端调用超过 15 秒未返回则报错，避免按钮永久卡在"创建中"
@@ -133,7 +133,7 @@ const AddTaskModal: Component<AddTaskModalProps> = (props) => {
         console.log('[AddTaskModal] Form invalid, returning');
         setSubmitStatus('error');
         setErrorMessage('标题至少需要 2 个字符');
-        document.title = 'Deadline Guardian';
+        document.title = '到点了';
         return;
       }
 
@@ -164,7 +164,7 @@ const AddTaskModal: Component<AddTaskModalProps> = (props) => {
         if (!props.canCreate) {
           setSubmitStatus('error');
           setErrorMessage('已达任务上限（1000条），请先删除部分任务');
-          document.title = 'Deadline Guardian';
+          document.title = '到点了';
           return;
         }
         console.log('[AddTaskModal] Calling createTask...');
@@ -181,14 +181,14 @@ const AddTaskModal: Component<AddTaskModalProps> = (props) => {
         props.onTaskCreated();
       }
       setSubmitStatus('idle');
-      document.title = 'Deadline Guardian';
+      document.title = '到点了';
       props.onClose();
     } catch (error) {
       console.error('[AddTaskModal] Error submit task:', error);
       const msg = error instanceof Error ? error.message : String(error);
       setSubmitStatus('error');
       setErrorMessage(msg);
-      document.title = 'Deadline Guardian';
+      document.title = '到点了';
     }
   };
 

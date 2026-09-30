@@ -10,7 +10,7 @@ export async function safeInvoke<T = unknown>(command: string, args?: Record<str
     throw new Error(
       '当前运行在浏览器环境中，无法调用后端接口。\n' +
       '请在 Tauri 应用窗口中使用此功能。\n\n' +
-      '提示：按 Alt+Tab 切换到 Deadline Guardian 窗口，\n' +
+      '提示：按 Alt+Tab 切换到 到点了 窗口，\n' +
       '或双击系统托盘图标打开窗口。'
     );
   }

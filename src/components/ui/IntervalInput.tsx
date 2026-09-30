@@ -7,10 +7,11 @@ interface IntervalInputProps {
   min?: number;
   max?: number;
   disabled?: boolean;
+  unit?: string;
 }
 
 /**
- * 提醒间隔输入：可手动输入数字，单位"分钟"。
+ * 数字输入：可手动输入数字，默认单位"分钟"（unit 可覆盖，如"秒"）。
  * 失焦/回车时提交（自动夹取到 [min, max]）；输入过程中允许临时为空。
  */
 export function IntervalInput(props: IntervalInputProps): JSX.Element {
@@ -54,7 +55,7 @@ export function IntervalInput(props: IntervalInputProps): JSX.Element {
           if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
         }}
       />
-      <span class="interval-input-unit">分钟</span>
+      <span class="interval-input-unit">{props.unit ?? '分钟'}</span>
     </div>
   );
 }

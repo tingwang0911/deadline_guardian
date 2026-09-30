@@ -1,5 +1,4 @@
 import { Component, createSignal, onMount, onCleanup, Show, createMemo } from "solid-js";
-import TitleBar from "./components/chrome/TitleBar";
 import TabBar from "./components/chrome/TabBar";
 import AddTaskModal from "./components/AddTaskModal";
 import TaskList from "./components/task/TaskList";
@@ -32,6 +31,7 @@ const App: Component = () => {
   const [eyecareEnabled, setEyecareEnabled] = createSignal(false);
   const [eyecareInterval, setEyecareInterval] = createSignal(20);
   const [eyecareMode, setEyecareMode] = createSignal<EyecareMode>('gentle');
+  const [eyecareLookDuration, setEyecareLookDuration] = createSignal(20);
   const [autoStart, setAutoStart] = createSignal(false);
 
   // 健康生活二级页面：home=功能开关首页，drinking=喝水提醒详情，standing=久坐站立详情
@@ -100,6 +100,17 @@ const App: Component = () => {
       await saveEyecareConfig({ mode });
     } catch (e) {
       console.warn('[App] 保存护眼模式失败:', e);
+    }
+  }
+
+  /** 强制黑屏远眺时长（秒）：仅 force 模式下可设置，夹取 1-3600 */
+  async function onChangeEyecareLookDuration(seconds: number) {
+    setEyecareLookDuration(seconds);
+    if (!isTauriEnvironment()) return;
+    try {
+      await saveEyecareConfig({ lookDurationSec: seconds });
+    } catch (e) {
+      console.warn('[App] 保存黑屏时长失败:', e);
     }
   }
 
@@ -197,6 +208,7 @@ const App: Component = () => {
           setEyecareEnabled(cfg.enabled);
           setEyecareInterval(cfg.intervalMin);
           setEyecareMode(cfg.mode);
+          setEyecareLookDuration(cfg.lookDurationSec);
         })
         .catch((e) => console.warn('[App] 读取护眼配置失败:', e));
       // 开机自启状态以系统注册表为准（启动时回填勾选）
@@ -269,7 +281,6 @@ const App: Component = () => {
 
   return (
     <div class="app-window">
-      <TitleBar />
       <TabBar activeTab={activeTab()} onChange={setActiveTab} />
 
       {!isTauriEnvironment() && (
@@ -348,6 +359,12 @@ const App: Component = () => {
                 <span class="eyecare-interval-label">提醒间隔</span>
                 <IntervalInput value={eyecareInterval()} onChange={onChangeEyecareInterval} min={1} max={240} />
               </span>
+              <Show when={eyecareMode() === 'force'}>
+                <span class="eyecare-interval">
+                  <span class="eyecare-interval-label">黑屏时长</span>
+                  <IntervalInput value={eyecareLookDuration()} onChange={onChangeEyecareLookDuration} min={1} max={3600} unit="秒" />
+                </span>
+              </Show>
               <span class="eyecare-mode">
                 <span class="eyecare-interval-label">模式</span>
                 <select
@@ -364,26 +381,6 @@ const App: Component = () => {
 
           <div class="health-general">
             <div class="health-general-title">通用设置</div>
-
-            <div class="general-setting">
-              <div class="general-label">空闲重置时长</div>
-              <select class="general-select">
-                <option value="3">3分钟</option>
-                <option value="5" selected>5分钟（默认）</option>
-                <option value="10">10分钟</option>
-                <option value="15">15分钟</option>
-                <option value="never">从不重置</option>
-              </select>
-            </div>
-
-            <div class="general-setting">
-              <div class="general-label">通知方式</div>
-              <select class="general-select">
-                <option value="sound-popup" selected>声音 + 弹窗</option>
-                <option value="sound">仅声音</option>
-                <option value="popup">仅弹窗</option>
-              </select>
-            </div>
 
             <div class="general-setting">
               <label class="checkbox">

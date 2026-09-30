@@ -53,64 +53,6 @@ html, body, #root {
   overflow-x: hidden;
 }
 
-.titlebar {
-  height: var(--titlebar-height);
-  background-color: var(--color-bg-dark);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 8px;
-  user-select: none;
-  flex-shrink: 0;
-}
-
-.titlebar-title {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-white);
-  font-weight: 500;
-  padding-left: 8px;
-  letter-spacing: 0.3px;
-}
-
-.titlebar-controls {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.titlebar-btn {
-  width: 28px;
-  height: 24px;
-  border: none;
-  background: transparent;
-  color: var(--color-text-placeholder);
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 3px;
-  transition: background-color var(--transition-fast), color var(--transition-fast);
-}
-
-.titlebar-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: var(--color-text-white);
-}
-
-.titlebar-btn.close:hover {
-  background-color: var(--color-danger);
-  color: var(--color-text-white);
-}
-
-.titlebar-btn svg {
-  width: 10px;
-  height: 10px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 1.5;
-}
-
 .tab-bar {
   display: flex;
   height: var(--tab-height);
