@@ -1,5 +1,5 @@
 import { Component, createSignal, onMount, Show, For } from 'solid-js';
-import { IntervalInput } from '../ui';
+import { IntervalInput, ToggleSwitch } from '../ui';
 import { StretchIcon } from './StretchIcon';
 import {
   getStandingConfig,
@@ -11,6 +11,9 @@ import { isTauriEnvironment } from '../../services/tauriAdapter';
 
 interface Props {
   onBack: () => void;
+  /** 久坐/站立提醒是否开启（由 App 首页开关持有，单一数据源） */
+  enabled: boolean;
+  onToggleEnabled: (checked: boolean) => void;
 }
 
 /**
@@ -62,14 +65,24 @@ const StandingDetail: Component<Props> = (props) => {
 
       <Show when={cfg()} fallback={<div style={{ padding: '24px', color: 'var(--color-text-secondary)' }}>加载中…</div>}>
         <div class="health-detail-body">
-          {/* 提醒间隔（手动输入分钟数） */}
+          {/* 提醒总开关：蓝色=开启，间隔等提醒设置生效；非蓝色=关闭提醒 */}
+          <div class="setting-row setting-row-switch">
+            <div class="setting-label">开启提醒</div>
+            <ToggleSwitch checked={props.enabled} onChange={props.onToggleEnabled} title="是否开启提醒" />
+          </div>
+
+          {/* 提醒间隔（手动输入分钟数；提醒关闭时停用，开启后再生效） */}
           <div class="setting-row">
             <div class="setting-label">提醒间隔</div>
             <IntervalInput
               value={cfg()!.intervalMin}
               onChange={(minutes) => patch({ intervalMin: minutes })}
+              disabled={!props.enabled}
             />
           </div>
+          <Show when={!props.enabled}>
+            <div class="setting-tips setting-tips-off">提醒已关闭，开启后间隔设置生效</div>
+          </Show>
 
           {/* 拉伸指导预览 */}
           <div class="stretch-section">

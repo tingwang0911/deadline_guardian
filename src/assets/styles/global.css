@@ -151,9 +151,19 @@ html, body, #root {
 
 .toggle-switch {
   position: relative;
+  display: inline-block;
   width: 44px;
   height: 24px;
   flex-shrink: 0;
+}
+
+.toggle-switch.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toggle-switch.is-disabled .toggle-slider {
+  cursor: not-allowed;
 }
 
 .toggle-switch input {
@@ -1367,6 +1377,12 @@ html, body, #root {
   padding: 0 var(--space-xs);
 }
 
+/* 提醒关闭时的说明：紧贴上方的间隔设置行 */
+.setting-tips-off {
+  margin-top: calc(-1 * var(--space-sm));
+  color: #B45309;
+}
+
 .saving-hint {
   font-size: var(--font-size-xs);
   color: var(--color-text-placeholder);
@@ -1402,6 +1418,16 @@ html, body, #root {
   text-align: right;
   -moz-appearance: textfield;
   appearance: textfield;
+}
+
+.interval-input:has(.interval-input-field:disabled) {
+  background-color: #F3F4F6;
+  opacity: 0.6;
+}
+
+.interval-input-field:disabled {
+  cursor: not-allowed;
+  color: var(--color-text-placeholder);
 }
 
 .interval-input-field::-webkit-outer-spin-button,

@@ -309,8 +309,8 @@ const App: Component = () => {
           when={healthView() === 'home'}
           fallback={
             healthView() === 'drinking'
-              ? <DrinkingDetail onBack={() => setHealthView('home')} />
-              : <StandingDetail onBack={() => setHealthView('home')} />
+              ? <DrinkingDetail onBack={() => setHealthView('home')} enabled={drinkingEnabled()} onToggleEnabled={onToggleDrinking} />
+              : <StandingDetail onBack={() => setHealthView('home')} enabled={standingEnabled()} onToggleEnabled={onToggleStanding} />
           }
         >
         <div class="health-section">
@@ -323,7 +323,7 @@ const App: Component = () => {
             </div>
             <span class="health-item-arrow">
               <span onClick={(e) => e.stopPropagation()}>
-                <ToggleSwitch checked={drinkingEnabled()} onChange={onToggleDrinking} />
+                <ToggleSwitch checked={drinkingEnabled()} onChange={onToggleDrinking} title="是否开启提醒" />
               </span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px;color:var(--color-text-secondary);">
                 <polyline points="9 18 15 12 9 6" />
@@ -338,7 +338,7 @@ const App: Component = () => {
             </div>
             <span class="health-item-arrow">
               <span onClick={(e) => e.stopPropagation()}>
-                <ToggleSwitch checked={standingEnabled()} onChange={onToggleStanding} />
+                <ToggleSwitch checked={standingEnabled()} onChange={onToggleStanding} title="是否开启提醒" />
               </span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px;color:var(--color-text-secondary);">
                 <polyline points="9 18 15 12 9 6" />
@@ -352,7 +352,7 @@ const App: Component = () => {
                 <div class="health-name">护眼/远眺提醒</div>
                 <div class="health-desc">20-20-20法则，支持强制黑屏远眺</div>
               </div>
-              <ToggleSwitch checked={eyecareEnabled()} onChange={onToggleEyecare} />
+              <ToggleSwitch checked={eyecareEnabled()} onChange={onToggleEyecare} title="是否开启提醒" />
             </div>
             <div class="eyecare-controls-row">
               <span class="eyecare-interval">
